@@ -1402,13 +1402,33 @@ enum GatewayCommands {
 enum DoctorCommands {
     /// Validate system prerequisites for running a gateway.
     ///
-    /// Checks that a Docker-compatible runtime is installed, running, and
-    /// reachable. Reports version info and socket path.
+    /// Checks installed local container runtimes and reports connectivity,
+    /// version information, and the relevant socket configuration.
     ///
     /// Examples:
     ///   openshell doctor check
+    ///   openshell doctor check --driver podman
     #[command(help_template = LEAF_HELP_TEMPLATE)]
-    Check,
+    Check {
+        /// Only check this runtime, ignoring any others installed.
+        #[arg(long, value_enum)]
+        driver: Option<DoctorRuntime>,
+    },
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum DoctorRuntime {
+    Docker,
+    Podman,
+}
+
+impl DoctorRuntime {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Docker => "docker",
+            Self::Podman => "podman",
+        }
+    }
 }
 
 #[derive(Subcommand, Debug)]
@@ -2683,8 +2703,8 @@ async fn run_async() -> Result<()> {
         Some(Commands::Doctor {
             command: Some(command),
         }) => match command {
-            DoctorCommands::Check => {
-                run::doctor_check()?;
+            DoctorCommands::Check { driver } => {
+                run::doctor_check(driver.map(DoctorRuntime::as_str))?;
             }
         },
         Some(Commands::Doctor { command: None }) => {
