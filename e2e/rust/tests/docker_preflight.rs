@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg(unix)]
+
 //! Doctor local-runtime preflight e2e tests.
 //!
 //! These tests isolate PATH and provide fake Docker/Podman executables so the
 //! host's installed runtimes cannot change the result.
-
-#![cfg(unix)]
 
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
