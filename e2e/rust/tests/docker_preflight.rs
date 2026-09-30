@@ -12,7 +12,7 @@
 
 use std::process::Stdio;
 use std::time::Instant;
-use std::{env, fs};
+use std::fs;
 
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -41,15 +41,13 @@ async fn run_without_docker(args: &[&str]) -> (String, i32, std::time::Duration)
     fs::set_permissions(&fake_docker, fs::Permissions::from_mode(0o755))
         .expect("chmod fake docker");
 
-    let old_path = env::var("PATH").unwrap_or_default();
-    let path = format!("{}:{old_path}", bin_dir.display());
     let start = Instant::now();
 
     let mut cmd = openshell_cmd();
     cmd.args(args)
         .env("XDG_CONFIG_HOME", tmpdir.path())
         .env("HOME", tmpdir.path())
-        .env("PATH", path)
+        .env("PATH", &bin_dir)
         .env("DOCKER_HOST", "unix:///tmp/openshell-e2e-nonexistent.sock")
         .env_remove("OPENSHELL_GATEWAY")
         .env_remove("OPENSHELL_GATEWAY_ENDPOINT")
