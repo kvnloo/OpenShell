@@ -303,10 +303,11 @@ async fn check_podman_runtime() -> RuntimeCheck {
 
     let mut command = tokio::process::Command::new("podman");
     if let Some(socket) = socket.as_deref() {
-        command
-            .arg("--url")
-            .arg(format!("unix://{socket}"))
-            .args(["version", "--format", "{{.Server.Version}}"]);
+        command.arg("--url").arg(format!("unix://{socket}")).args([
+            "version",
+            "--format",
+            "{{.Server.Version}}",
+        ]);
     } else {
         command.args(["info", "--format", "{{.Version.Version}}"]);
     }
@@ -406,7 +407,10 @@ async fn doctor_check_single(driver: DoctorRuntime) -> Result<()> {
     };
 
     if matches!(check, RuntimeCheck::NotInstalled) {
-        return Err(miette!("{} is not installed or not on PATH", driver.as_str()));
+        return Err(miette!(
+            "{} is not installed or not on PATH",
+            driver.as_str()
+        ));
     }
 
     let mut stdout = std::io::stdout().lock();
