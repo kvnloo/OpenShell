@@ -38,6 +38,7 @@ pub mod net;
 #[cfg(feature = "oauth")]
 pub mod oauth;
 pub mod paths;
+pub mod podman_socket_discovery;
 pub mod policy;
 pub mod policy_identity;
 pub mod progress;
