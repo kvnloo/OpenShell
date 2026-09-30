@@ -381,11 +381,13 @@ fn report_podman(stdout: &mut impl Write, check: &RuntimeCheck) -> Result<bool> 
         RuntimeCheck::NotInstalled => unreachable!("caller filters out missing runtimes"),
         failed => {
             let hint = match std::env::var("OPENSHELL_PODMAN_SOCKET") {
-                Ok(socket) if !socket.trim().is_empty() => format!(
-                    "Verify with: podman --url unix://{socket} info"
-                ),
-                _ => "Check the Podman service and run 'podman --remote info' directly for details."
-                    .to_string(),
+                Ok(socket) if !socket.trim().is_empty() => {
+                    format!("Verify with: podman --url unix://{socket} info")
+                }
+                _ => {
+                    "Check the Podman service and run 'podman --remote info' directly for details."
+                        .to_string()
+                }
             };
             report_failure(stdout, failed, &hint)
         }
