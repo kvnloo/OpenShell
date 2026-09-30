@@ -422,6 +422,7 @@ const DOCTOR_HELP: &str = "\x1b[1mALIAS\x1b[0m
 
 \x1b[1mEXAMPLES\x1b[0m
   $ openshell doctor check
+  $ openshell doctor check --driver podman
 ";
 
 /// `OpenShell` CLI - agent execution and management.
