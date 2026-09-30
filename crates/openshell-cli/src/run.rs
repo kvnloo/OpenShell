@@ -285,7 +285,10 @@ async fn run_runtime_check(
     run_runtime_check_with_timeout(command, description, DOCTOR_RUNTIME_TIMEOUT).await
 }
 
-async fn command_is_installed(program: &'static str, timeout: Duration) -> Result<bool, RuntimeCheck> {
+async fn command_is_installed(
+    program: &'static str,
+    timeout: Duration,
+) -> Result<bool, RuntimeCheck> {
     let mut command = tokio::process::Command::new(program);
     command.arg("--version").kill_on_drop(true);
 
