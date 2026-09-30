@@ -1,0 +1,99 @@
+name: Fork Doctor Validation
+
+on:
+  push:
+    branches:
+      - "pull-request/4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Doctor compile and deterministic tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        run: |
+          rustup set profile minimal
+          rustup toolchain install
+          rustup component add rustfmt clippy
+
+      - name: Rust format
+        run: cargo fmt --all -- --check
+
+      - name: Check affected crates
+        run: cargo check -p openshell-core -p openshell-driver-podman -p openshell-cli
+
+      - name: Clippy affected crates
+        run: cargo clippy -p openshell-core -p openshell-driver-podman -p openshell-cli --all-targets -- -D warnings
+
+      - name: CLI unit tests
+        run: cargo test -p openshell-cli
+
+      - name: Shared Podman discovery unit tests
+        run: cargo test -p openshell-core podman_socket_discovery -- --nocapture
+
+      - name: Podman driver tests
+        run: cargo test -p openshell-driver-podman
+
+      - name: Build CLI
+        run: cargo build -p openshell-cli
+
+      - name: Deterministic doctor test matrix
+        run: cargo test --manifest-path e2e/rust/Cargo.toml --features e2e-docker --test docker_preflight -- --nocapture
+
+      - name: Real Docker doctor probe
+        run: ./target/debug/openshell doctor check --driver docker
+
+  podman:
+    name: Real Podman service doctor probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        run: |
+          rustup set profile minimal
+          rustup toolchain install
+
+      - name: Build CLI
+        run: cargo build -p openshell-cli
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Start Podman API service
+        shell: bash
+        run: |
+          set -euo pipefail
+          socket=/tmp/openshell-podman.sock
+          rm -f "$socket"
+          podman system service --time=0 "unix://$socket" >/tmp/openshell-podman-service.log 2>&1 &
+          echo $! > /tmp/openshell-podman-service.pid
+          for _ in $(seq 1 30); do
+            if [ -S "$socket" ]; then
+              break
+            fi
+            if ! kill -0 "$(cat /tmp/openshell-podman-service.pid)" 2>/dev/null; then
+              cat /tmp/openshell-podman-service.log
+              exit 1
+            fi
+            sleep 1
+          done
+          test -S "$socket"
+          podman --url "unix://$socket" version
+
+      - name: Real Podman doctor probe
+        env:
+          OPENSHELL_PODMAN_SOCKET: /tmp/openshell-podman.sock
+        run: |
+          ./target/debug/openshell doctor check --driver podman
+          ./target/debug/openshell doctor check
