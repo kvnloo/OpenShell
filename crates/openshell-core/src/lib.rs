@@ -40,6 +40,7 @@ pub mod oauth;
 pub mod paths;
 pub mod policy;
 pub mod policy_identity;
+pub mod podman_socket_discovery;
 pub mod progress;
 pub mod proposals;
 pub mod proto;
