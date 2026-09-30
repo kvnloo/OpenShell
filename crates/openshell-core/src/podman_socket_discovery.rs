@@ -83,11 +83,13 @@ fn discover_machine_socket(deadline: Instant) -> Option<PathBuf> {
         connections.as_ref(),
     )?;
 
-    machine_inspect_targets(&active).into_iter().find_map(|name| {
-        let stdout = run_podman_capture(&["machine", "inspect", &name], deadline)?;
-        let machines: serde_json::Value = serde_json::from_slice(&stdout).ok()?;
-        parse_machine_socket(&machines)
-    })
+    machine_inspect_targets(&active)
+        .into_iter()
+        .find_map(|name| {
+            let stdout = run_podman_capture(&["machine", "inspect", &name], deadline)?;
+            let machines: serde_json::Value = serde_json::from_slice(&stdout).ok()?;
+            parse_machine_socket(&machines)
+        })
 }
 
 fn active_machine(
@@ -274,15 +276,13 @@ mod tests {
 
     #[test]
     fn parses_native_and_machine_socket_paths() {
-        let info =
-            json!({"host": {"remoteSocket": {"path": "unix:///run/user/1000/podman.sock"}}});
+        let info = json!({"host": {"remoteSocket": {"path": "unix:///run/user/1000/podman.sock"}}});
         assert_eq!(
             parse_info_socket(&info),
             Some(PathBuf::from("/run/user/1000/podman.sock"))
         );
 
-        let machine =
-            json!([{"ConnectionInfo": {"PodmanSocket": {"Path": "/tmp/machine.sock"}}}]);
+        let machine = json!([{"ConnectionInfo": {"PodmanSocket": {"Path": "/tmp/machine.sock"}}}]);
         assert_eq!(
             parse_machine_socket(&machine),
             Some(PathBuf::from("/tmp/machine.sock"))
@@ -360,7 +360,10 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn bounded_command_returns_none_on_nonzero_exit_or_missing_program() {
-        assert_eq!(run_bounded_command("false", &[], Duration::from_secs(5)), None);
+        assert_eq!(
+            run_bounded_command("false", &[], Duration::from_secs(5)),
+            None
+        );
         assert_eq!(
             run_bounded_command(
                 "openshell-nonexistent-binary-xyz",
