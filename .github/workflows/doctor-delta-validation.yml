@@ -1,0 +1,30 @@
+name: Doctor delta validation
+
+on:
+  push:
+    branches:
+      - validation/3694-eric-3748-delta
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Check CLI
+        run: cargo check -p openshell-cli
+      - name: Build CLI
+        run: cargo build -p openshell-cli
+      - name: Doctor preflight tests
+        working-directory: e2e/rust
+        env:
+          OPENSHELL_BIN: ${{ github.workspace }}/target/debug/openshell
+        run: cargo test --features e2e-docker --test docker_preflight
