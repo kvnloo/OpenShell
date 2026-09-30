@@ -209,46 +209,282 @@ fn current_user_to_json(view: &CurrentUserView) -> serde_json::Value {
     })
 }
 
-/// Validate system prerequisites for running a gateway.
+const DOCTOR_RUNTIME_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// Local container runtime supported by `openshell doctor check`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, clap::ValueEnum)]
+pub enum DoctorRuntime {
+    Docker,
+    Podman,
+}
+
+impl DoctorRuntime {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Docker => "docker",
+            Self::Podman => "podman",
+        }
+    }
+}
+
+enum RuntimeCheck {
+    NotInstalled,
+    Ready(String),
+    Failed {
+        detail: String,
+        exit_code: Option<i32>,
+    },
+    TimedOut,
+}
+
+async fn run_runtime_check(
+    mut command: tokio::process::Command,
+    description: &'static str,
+) -> RuntimeCheck {
+    command.kill_on_drop(true);
+
+    match tokio::time::timeout(DOCTOR_RUNTIME_TIMEOUT, command.output()).await {
+        Err(_) => RuntimeCheck::TimedOut,
+        Ok(Err(err)) if err.kind() == ErrorKind::NotFound => RuntimeCheck::NotInstalled,
+        Ok(Err(err)) => RuntimeCheck::Failed {
+            detail: format!("failed to execute {description}: {err}"),
+            exit_code: None,
+        },
+        Ok(Ok(output)) if output.status.success() => {
+            RuntimeCheck::Ready(String::from_utf8_lossy(&output.stdout).trim().to_string())
+        }
+        Ok(Ok(output)) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let detail = if stderr.trim().is_empty() {
+                stdout.trim()
+            } else {
+                stderr.trim()
+            };
+            RuntimeCheck::Failed {
+                detail: if detail.is_empty() {
+                    format!("{description} exited unsuccessfully")
+                } else {
+                    detail.to_string()
+                },
+                exit_code: output.status.code(),
+            }
+        }
+    }
+}
+
+async fn check_docker_runtime() -> RuntimeCheck {
+    let mut command = tokio::process::Command::new("docker");
+    command.args(["info", "--format", "{{.ServerVersion}}"]);
+    run_runtime_check(command, "docker info").await
+}
+
+async fn check_podman_runtime() -> RuntimeCheck {
+    let mut command = tokio::process::Command::new("podman");
+
+    match std::env::var("OPENSHELL_PODMAN_SOCKET") {
+        Ok(socket) if socket.trim().is_empty() => {
+            return RuntimeCheck::Failed {
+                detail: "OPENSHELL_PODMAN_SOCKET is set but empty".to_string(),
+                exit_code: None,
+            };
+        }
+        Ok(socket) => {
+            command.arg("--url").arg(format!("unix://{socket}"));
+        }
+        Err(std::env::VarError::NotPresent) => {
+            // Podman is daemonless locally. Force remote mode so doctor verifies
+            // the API service OpenShell's Podman driver actually requires.
+            command.arg("--remote");
+        }
+        Err(std::env::VarError::NotUnicode(_)) => {
+            return RuntimeCheck::Failed {
+                detail: "OPENSHELL_PODMAN_SOCKET is not valid UTF-8".to_string(),
+                exit_code: None,
+            };
+        }
+    }
+
+    command.args(["version", "--format", "{{.Server.Version}}"]);
+    run_runtime_check(command, "podman version").await
+}
+
+fn report_failure(
+    stdout: &mut impl Write,
+    check: &RuntimeCheck,
+    command_hint: &str,
+) -> Result<bool> {
+    match check {
+        RuntimeCheck::Failed { detail, exit_code } => {
+            writeln!(stdout, "FAILED").into_diagnostic()?;
+            if let Some(code) = exit_code {
+                writeln!(stdout, "    {detail} (exit code {code})").into_diagnostic()?;
+            } else {
+                writeln!(stdout, "    {detail}").into_diagnostic()?;
+            }
+            writeln!(stdout, "    {command_hint}").into_diagnostic()?;
+            Ok(false)
+        }
+        RuntimeCheck::TimedOut => {
+            writeln!(
+                stdout,
+                "FAILED (timed out after {}s)",
+                DOCTOR_RUNTIME_TIMEOUT.as_secs()
+            )
+            .into_diagnostic()?;
+            writeln!(stdout, "    {command_hint}").into_diagnostic()?;
+            Ok(false)
+        }
+        RuntimeCheck::NotInstalled | RuntimeCheck::Ready(_) => {
+            unreachable!("report_failure only handles failed runtime checks")
+        }
+    }
+}
+
+fn report_docker(stdout: &mut impl Write, check: &RuntimeCheck) -> Result<bool> {
+    write!(stdout, "  Docker ............. ").into_diagnostic()?;
+    match check {
+        RuntimeCheck::Ready(version) => {
+            writeln!(stdout, "ok (version {version})").into_diagnostic()?;
+            write!(stdout, "  DOCKER_HOST ........ ").into_diagnostic()?;
+            match std::env::var("DOCKER_HOST") {
+                Ok(value) => writeln!(stdout, "{value}").into_diagnostic()?,
+                Err(_) => writeln!(stdout, "(not set, using default socket)").into_diagnostic()?,
+            }
+            Ok(true)
+        }
+        RuntimeCheck::NotInstalled => unreachable!("caller filters out missing runtimes"),
+        failed => report_failure(
+            stdout,
+            failed,
+            "Check DOCKER_HOST and run 'docker info' directly for details.",
+        ),
+    }
+}
+
+fn report_podman(stdout: &mut impl Write, check: &RuntimeCheck) -> Result<bool> {
+    write!(stdout, "  Podman ............. ").into_diagnostic()?;
+    match check {
+        RuntimeCheck::Ready(version) => {
+            writeln!(stdout, "ok (version {version})").into_diagnostic()?;
+            write!(stdout, "  OPENSHELL_PODMAN_SOCKET ").into_diagnostic()?;
+            match std::env::var("OPENSHELL_PODMAN_SOCKET") {
+                Ok(value) => writeln!(stdout, "{value}").into_diagnostic()?,
+                Err(_) => writeln!(
+                    stdout,
+                    "(not set, using Podman's configured/default remote service)"
+                )
+                .into_diagnostic()?,
+            }
+            Ok(true)
+        }
+        RuntimeCheck::NotInstalled => unreachable!("caller filters out missing runtimes"),
+        failed => {
+            let hint = match std::env::var("OPENSHELL_PODMAN_SOCKET") {
+                Ok(socket) if !socket.trim().is_empty() => format!(
+                    "Verify with: podman --url unix://{socket} info"
+                ),
+                _ => "Check the Podman service and run 'podman --remote info' directly for details."
+                    .to_string(),
+            };
+            report_failure(stdout, failed, &hint)
+        }
+    }
+}
+
+async fn doctor_check_single(stdout: &mut impl Write, driver: DoctorRuntime) -> Result<()> {
+    let healthy = match driver {
+        DoctorRuntime::Docker => match check_docker_runtime().await {
+            RuntimeCheck::NotInstalled => {
+                return Err(miette!("docker is not installed or not on PATH"));
+            }
+            check => report_docker(stdout, &check)?,
+        },
+        DoctorRuntime::Podman => match check_podman_runtime().await {
+            RuntimeCheck::NotInstalled => {
+                return Err(miette!("podman is not installed or not on PATH"));
+            }
+            check => report_podman(stdout, &check)?,
+        },
+    };
+
+    if !healthy {
+        return Err(miette!(
+            "{} is not ready; see the FAILED check above",
+            driver.as_str()
+        ));
+    }
+
+    writeln!(stdout, "\nAll checks passed.").into_diagnostic()?;
+    Ok(())
+}
+
+async fn doctor_check_auto(stdout: &mut impl Write) -> Result<()> {
+    // The probes are independent. Run them concurrently so a stopped runtime
+    // cannot add its full timeout to another stopped runtime's timeout.
+    let (docker, podman) = tokio::join!(check_docker_runtime(), check_podman_runtime());
+
+    let mut considered = 0usize;
+    let mut healthy = 0usize;
+
+    if !matches!(docker, RuntimeCheck::NotInstalled) {
+        considered += 1;
+        if report_docker(stdout, &docker)? {
+            healthy += 1;
+        }
+    }
+
+    if !matches!(podman, RuntimeCheck::NotInstalled) {
+        considered += 1;
+        if report_podman(stdout, &podman)? {
+            healthy += 1;
+        }
+    }
+
+    if considered == 0 {
+        return Err(miette!(
+            "no supported local container runtime found on PATH; install Docker or Podman"
+        ));
+    }
+
+    if healthy == 0 {
+        return Err(miette!(
+            "no supported local container runtime is ready; see the FAILED checks above"
+        ));
+    }
+
+    if healthy == considered {
+        writeln!(stdout, "\nAll checks passed.").into_diagnostic()?;
+    } else {
+        writeln!(
+            stdout,
+            "\nAt least one supported container runtime is ready."
+        )
+        .into_diagnostic()?;
+        writeln!(
+            stdout,
+            "Use --driver docker|podman to require a specific runtime."
+        )
+        .into_diagnostic()?;
+    }
+
+    Ok(())
+}
+
+/// Validate local container-runtime prerequisites for running a gateway.
 ///
-/// Checks Docker connectivity and reports the result. Returns exit code 0
-/// if all checks pass, 1 otherwise.
-pub fn doctor_check() -> Result<()> {
-    use std::io::Write;
+/// With no override, probes installed Docker and Podman candidates concurrently
+/// and succeeds when at least one is ready. An explicit driver is authoritative.
+pub async fn doctor_check(driver: Option<DoctorRuntime>) -> Result<()> {
     let mut stdout = std::io::stdout().lock();
 
     writeln!(stdout, "Checking system prerequisites...\n").into_diagnostic()?;
-
-    // --- Docker connectivity ---
-    write!(stdout, "  Docker ............. ").into_diagnostic()?;
     stdout.flush().into_diagnostic()?;
 
-    let output = Command::new("docker")
-        .args(["info", "--format", "{{.ServerVersion}}"])
-        .output()
-        .into_diagnostic()
-        .wrap_err("failed to execute docker info")?;
-
-    if output.status.success() {
-        let version = String::from_utf8_lossy(&output.stdout);
-        let version_str = version.trim();
-        writeln!(stdout, "ok (version {version_str})").into_diagnostic()?;
-
-        // --- DOCKER_HOST ---
-        write!(stdout, "  DOCKER_HOST ........ ").into_diagnostic()?;
-        match std::env::var("DOCKER_HOST") {
-            Ok(val) => writeln!(stdout, "{val}").into_diagnostic()?,
-            Err(_) => writeln!(stdout, "(not set, using default socket)").into_diagnostic()?,
-        }
-
-        writeln!(stdout, "\nAll checks passed.").into_diagnostic()?;
-        return Ok(());
+    match driver {
+        Some(driver) => doctor_check_single(&mut stdout, driver).await,
+        None => doctor_check_auto(&mut stdout).await,
     }
-
-    writeln!(stdout, "FAILED").into_diagnostic()?;
-    writeln!(stdout).into_diagnostic()?;
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    Err(miette::miette!("docker info failed: {}", stderr.trim()))
 }
 
 fn sandbox_should_persist(keep: bool, forward: Option<&ForwardSpec>, expose: Option<u16>) -> bool {
