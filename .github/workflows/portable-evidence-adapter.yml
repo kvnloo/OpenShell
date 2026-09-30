@@ -1,0 +1,22 @@
+name: Portable Evidence Adapter
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches:
+      - feat/3694-podman-doctor-check
+    paths:
+      - 'experiments/portable_evidence/**'
+
+jobs:
+  python-adapter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python experiments/portable_evidence/test_doctor_evidence.py
