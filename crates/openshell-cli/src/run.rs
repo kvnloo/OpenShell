@@ -392,20 +392,23 @@ fn report_podman(stdout: &mut impl Write, check: &RuntimeCheck) -> Result<bool> 
     }
 }
 
-async fn doctor_check_single(stdout: &mut impl Write, driver: DoctorRuntime) -> Result<()> {
+async fn doctor_check_single(driver: DoctorRuntime) -> Result<()> {
+    let check = match driver {
+        DoctorRuntime::Docker => check_docker_runtime().await,
+        DoctorRuntime::Podman => check_podman_runtime().await,
+    };
+
+    if matches!(check, RuntimeCheck::NotInstalled) {
+        return Err(miette!(
+            "{} is not installed or not on PATH",
+            driver.as_str()
+        ));
+    }
+
+    let mut stdout = std::io::stdout().lock();
     let healthy = match driver {
-        DoctorRuntime::Docker => match check_docker_runtime().await {
-            RuntimeCheck::NotInstalled => {
-                return Err(miette!("docker is not installed or not on PATH"));
-            }
-            check => report_docker(stdout, &check)?,
-        },
-        DoctorRuntime::Podman => match check_podman_runtime().await {
-            RuntimeCheck::NotInstalled => {
-                return Err(miette!("podman is not installed or not on PATH"));
-            }
-            check => report_podman(stdout, &check)?,
-        },
+        DoctorRuntime::Docker => report_docker(&mut stdout, &check)?,
+        DoctorRuntime::Podman => report_podman(&mut stdout, &check)?,
     };
 
     if !healthy {
@@ -419,24 +422,25 @@ async fn doctor_check_single(stdout: &mut impl Write, driver: DoctorRuntime) -> 
     Ok(())
 }
 
-async fn doctor_check_auto(stdout: &mut impl Write) -> Result<()> {
+async fn doctor_check_auto() -> Result<()> {
     // The probes are independent. Run them concurrently so a stopped runtime
     // cannot add its full timeout to another stopped runtime's timeout.
     let (docker, podman) = tokio::join!(check_docker_runtime(), check_podman_runtime());
 
+    let mut stdout = std::io::stdout().lock();
     let mut considered = 0usize;
     let mut healthy = 0usize;
 
     if !matches!(docker, RuntimeCheck::NotInstalled) {
         considered += 1;
-        if report_docker(stdout, &docker)? {
+        if report_docker(&mut stdout, &docker)? {
             healthy += 1;
         }
     }
 
     if !matches!(podman, RuntimeCheck::NotInstalled) {
         considered += 1;
-        if report_podman(stdout, &podman)? {
+        if report_podman(&mut stdout, &podman)? {
             healthy += 1;
         }
     }
@@ -476,14 +480,15 @@ async fn doctor_check_auto(stdout: &mut impl Write) -> Result<()> {
 /// With no override, probes installed Docker and Podman candidates concurrently
 /// and succeeds when at least one is ready. An explicit driver is authoritative.
 pub async fn doctor_check(driver: Option<DoctorRuntime>) -> Result<()> {
-    let mut stdout = std::io::stdout().lock();
-
-    writeln!(stdout, "Checking system prerequisites...\n").into_diagnostic()?;
-    stdout.flush().into_diagnostic()?;
+    {
+        let mut stdout = std::io::stdout().lock();
+        writeln!(stdout, "Checking system prerequisites...\n").into_diagnostic()?;
+        stdout.flush().into_diagnostic()?;
+    }
 
     match driver {
-        Some(driver) => doctor_check_single(&mut stdout, driver).await,
-        None => doctor_check_auto(&mut stdout).await,
+        Some(driver) => doctor_check_single(driver).await,
+        None => doctor_check_auto().await,
     }
 }
 
