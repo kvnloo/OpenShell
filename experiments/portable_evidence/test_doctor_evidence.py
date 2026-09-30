@@ -67,6 +67,12 @@ class DoctorEvidenceTest(unittest.TestCase):
         self.assertNotIn("command", details)
         self.assertNotIn("environment", details)
 
+    def test_rejects_unknown_driver(self):
+        with self.assertRaises(ValueError):
+            self.module.normalize_doctor_result(
+                revision=self.sha, driver="containerd", returncode=0
+            )
+
     def test_requires_exact_revision(self):
         with self.assertRaises(ValueError):
             self.module.normalize_doctor_result(
