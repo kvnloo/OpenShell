@@ -139,7 +139,7 @@ async fn doctor_check_passes_with_docker() {
 
     let tmpdir = tempfile::tempdir().expect("create isolated config dir");
     let mut cmd = openshell_cmd();
-    cmd.args(["doctor", "check"])
+    cmd.args(["doctor", "check", "--driver", "docker"])
         .env("XDG_CONFIG_HOME", tmpdir.path())
         .env("HOME", tmpdir.path())
         .env_remove("OPENSHELL_GATEWAY")
