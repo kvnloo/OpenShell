@@ -1,5 +1,4 @@
 import importlib.util
-import json
 import pathlib
 import subprocess
 import unittest
@@ -52,17 +51,21 @@ class DoctorEvidenceTest(unittest.TestCase):
             receipt["evidence"][0]["details"]["error_type"], "TimeoutExpired"
         )
 
-    def test_receipt_contains_no_command_output_or_secret_fields(self):
+    def test_receipt_details_exclude_runtime_output_and_secret_fields(self):
         receipt = self.module.normalize_doctor_result(
             revision=self.sha,
             driver="podman",
             returncode=0,
         )
-        wire = json.dumps(receipt)
-        self.assertNotIn("stdout", wire)
-        self.assertNotIn("stderr", wire)
-        self.assertNotIn("command", wire)
-        self.assertNotIn("environment", wire)
+        details = receipt["evidence"][0]["details"]
+        self.assertEqual(
+            set(details),
+            {"driver", "returncode", "error_type"},
+        )
+        self.assertNotIn("stdout", details)
+        self.assertNotIn("stderr", details)
+        self.assertNotIn("command", details)
+        self.assertNotIn("environment", details)
 
     def test_requires_exact_revision(self):
         with self.assertRaises(ValueError):
