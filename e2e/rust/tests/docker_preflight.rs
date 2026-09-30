@@ -26,6 +26,23 @@ enum FakeRuntime {
 fn install_fake_runtime(bin_dir: &std::path::Path, name: &str, runtime: FakeRuntime) {
     let path = bin_dir.join(name);
     let script = match runtime {
+        FakeRuntime::Healthy(version) if name == "podman" => format!(
+            "#!/bin/sh\n\
+             if [ \"$1\" = \"--version\" ]; then\n\
+               printf '%s\\n' 'podman version {version}'\n\
+               exit 0\n\
+             fi\n\
+             if [ \"$1\" = \"info\" ] && [ \"$2\" = \"--format\" ] && [ \"$3\" = \"json\" ]; then\n\
+               printf '%s\\n' '{{\"host\":{{\"serviceIsRemote\":false,\"remoteSocket\":{{\"path\":\"unix:///tmp/openshell-test-discovered-podman.sock\"}}}}}}'\n\
+               exit 0\n\
+             fi\n\
+             if [ \"$1\" = \"--url\" ] && [ \"$3\" = \"version\" ]; then\n\
+               printf '%s\\n' '{version}'\n\
+               exit 0\n\
+             fi\n\
+             echo 'unexpected fake podman invocation' >&2\n\
+             exit 42\n"
+        ),
         FakeRuntime::Healthy(version) => {
             format!("#!/bin/sh\nprintf '%s\\n' '{version}'\nexit 0\n")
         }
@@ -61,6 +78,7 @@ async fn run_doctor(
     cmd.args(args)
         .env("XDG_CONFIG_HOME", tmpdir.path())
         .env("HOME", tmpdir.path())
+        .env("XDG_RUNTIME_DIR", tmpdir.path())
         .env("PATH", &bin_dir)
         .env("DOCKER_HOST", "unix:///tmp/openshell-e2e-nonexistent.sock")
         .env_remove("OPENSHELL_GATEWAY")
@@ -269,19 +287,50 @@ async fn doctor_check_rejects_empty_podman_socket() {
 }
 
 #[tokio::test]
-async fn doctor_check_podman_without_socket_forces_remote_service() {
+async fn doctor_check_podman_without_override_uses_discovered_local_socket() {
+    let (output, code, _) = run_doctor(
+        &["doctor", "check", "--driver", "podman"],
+        None,
+        Some(FakeRuntime::Healthy("5.8.4")),
+        None,
+    )
+    .await;
+    let clean = strip_ansi(&output);
+
+    assert_eq!(code, 0, "discovered local Podman socket should pass:\n{clean}");
+    assert!(clean.contains("5.8.4"), "missing Podman server version:\n{clean}");
+    assert!(
+        clean.contains("/tmp/openshell-test-discovered-podman.sock"),
+        "doctor should report the discovered local socket:\n{clean}"
+    );
+}
+
+#[tokio::test]
+async fn doctor_check_rejects_unrelated_remote_podman_connection() {
     let tmpdir = tempfile::tempdir().expect("create isolated config dir");
     let bin_dir = tmpdir.path().join("bin");
     fs::create_dir(&bin_dir).expect("create fake bin dir");
+    let remote = "ssh://core@example.invalid/run/user/1000/podman.sock";
     let fake_podman = bin_dir.join("podman");
     fs::write(
         &fake_podman,
-        "#!/bin/sh\n\
-         if [ \"$1\" != \"--remote\" ] || [ \"$2\" != \"version\" ]; then\n\
-           echo 'missing expected --remote version probe' >&2\n\
-           exit 42\n\
-         fi\n\
-         printf '%s\\n' '5.8.4'\n",
+        format!(
+            "#!/bin/sh\n\
+             if [ \"$1\" = \"--version\" ]; then\n\
+               printf '%s\\n' 'podman version 5.8.4'\n\
+               exit 0\n\
+             fi\n\
+             if [ \"$1\" = \"info\" ] && [ \"$2\" = \"--format\" ] && [ \"$3\" = \"json\" ]; then\n\
+               printf '%s\\n' '{{\"host\":{{\"serviceIsRemote\":true}}}}'\n\
+               exit 0\n\
+             fi\n\
+             if [ \"$1\" = \"system\" ] && [ \"$2\" = \"connection\" ]; then\n\
+               printf '%s\\n' '[{{\"Name\":\"remote\",\"URI\":\"{remote}\",\"Default\":true,\"IsMachine\":false}}]'\n\
+               exit 0\n\
+             fi\n\
+             echo 'doctor should not probe this remote as an OpenShell socket' >&2\n\
+             exit 42\n"
+        ),
     )
     .expect("write fake podman");
     fs::set_permissions(&fake_podman, fs::Permissions::from_mode(0o755))
@@ -291,10 +340,11 @@ async fn doctor_check_podman_without_socket_forces_remote_service() {
     cmd.args(["doctor", "check", "--driver", "podman"])
         .env("XDG_CONFIG_HOME", tmpdir.path())
         .env("HOME", tmpdir.path())
+        .env("XDG_RUNTIME_DIR", tmpdir.path())
         .env("PATH", &bin_dir)
-        .env_remove("OPENSHELL_PODMAN_SOCKET")
-        .env_remove("CONTAINER_HOST")
+        .env("CONTAINER_HOST", remote)
         .env_remove("CONTAINER_CONNECTION")
+        .env_remove("OPENSHELL_PODMAN_SOCKET")
         .env_remove("OPENSHELL_GATEWAY")
         .env_remove("OPENSHELL_GATEWAY_ENDPOINT")
         .stdout(Stdio::piped())
@@ -307,8 +357,15 @@ async fn doctor_check_podman_without_socket_forces_remote_service() {
         String::from_utf8_lossy(&output.stderr)
     ));
 
-    assert_eq!(output.status.code().unwrap_or(-1), 0, "remote probe should pass:\n{clean}");
-    assert!(clean.contains("5.8.4"), "missing Podman server version:\n{clean}");
+    assert_ne!(
+        output.status.code().unwrap_or(-1),
+        0,
+        "an unrelated SSH/TCP Podman remote must not satisfy OpenShell doctor:\n{clean}"
+    );
+    assert!(
+        clean.contains("no responsive OpenShell-compatible Podman API socket found"),
+        "missing local-endpoint diagnostic:\n{clean}"
+    );
 }
 
 #[tokio::test]
