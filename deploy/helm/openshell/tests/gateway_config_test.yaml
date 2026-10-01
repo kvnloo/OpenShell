@@ -1418,3 +1418,38 @@ tests:
       - equal:
           path: spec.template.spec.terminationGracePeriodSeconds
           value: 3
+
+
+  - it: omits sandbox uid and gid by default
+    template: templates/gateway-config.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["gateway.toml"]
+          pattern: 'sandbox_uid\s*='
+      - notMatchRegex:
+          path: data["gateway.toml"]
+          pattern: 'sandbox_gid\s*='
+
+  - it: renders explicit sandbox uid and gid in the Kubernetes driver table
+    template: templates/gateway-config.yaml
+    set:
+      server.drivers.kubernetes.sandboxUid: 20001
+      server.drivers.kubernetes.sandboxGid: 20002
+    asserts:
+      - matchRegex:
+          path: data["gateway.toml"]
+          pattern: '(?ms)\[openshell\.drivers\.kubernetes\].*?sandbox_uid\s*=\s*20001.*?sandbox_gid\s*=\s*20002'
+      - notMatchRegex:
+          path: data["gateway.toml"]
+          pattern: 'sandbox_uid\s*=\s*"'
+      - notMatchRegex:
+          path: data["gateway.toml"]
+          pattern: 'sandbox_gid\s*=\s*"'
+
+  - it: rejects a negative sandbox uid
+    template: templates/gateway-config.yaml
+    set:
+      server.drivers.kubernetes.sandboxUid: -1
+    asserts:
+      - failedTemplate:
+          errorMessage: "server.drivers.kubernetes.sandboxUid must be a positive integer or 0 to leave it unset"
