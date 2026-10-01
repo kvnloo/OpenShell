@@ -4,7 +4,6 @@ import subprocess
 import unittest
 from unittest import mock
 
-
 _PATH = pathlib.Path(__file__).with_name("doctor_evidence.py")
 
 
@@ -74,10 +73,35 @@ class DoctorEvidenceTest(unittest.TestCase):
             )
 
     def test_requires_exact_revision(self):
-        with self.assertRaises(ValueError):
-            self.module.normalize_doctor_result(
-                revision="main", driver="podman", returncode=0
-            )
+        for revision in [
+            "main",
+            "",
+            self.sha[:-1],
+            self.sha + "0",
+            " " + self.sha,
+            self.sha + " ",
+            self.sha + "\n",
+            self.sha + "\r\n",
+            self.sha[:-1] + "g",
+            None,
+            1,
+            b"0" * 40,
+        ]:
+            with (
+                self.subTest(revision=revision),
+                self.assertRaisesRegex(ValueError, "full 40-character Git SHA"),
+            ):
+                self.module.normalize_doctor_result(
+                    revision=revision, driver="podman", returncode=0
+                )
+
+    def test_preserves_full_revision_case(self):
+        for revision in [self.sha, self.sha.upper(), "0" * 40, "f" * 40]:
+            with self.subTest(revision=revision):
+                receipt = self.module.normalize_doctor_result(
+                    revision=revision, driver="podman", returncode=0
+                )
+                self.assertEqual(receipt["producer"]["revision"], revision)
 
 
 if __name__ == "__main__":
