@@ -195,6 +195,18 @@ data:
     {{- if .Values.server.enableUserNamespaces }}
     enable_user_namespaces       = true
     {{- end }}
+    {{- if .Values.server.drivers.kubernetes.sandboxUid }}
+    {{- if not (regexMatch "^[1-9][0-9]*$" (toString .Values.server.drivers.kubernetes.sandboxUid)) }}
+    {{- fail "server.drivers.kubernetes.sandboxUid must be a positive integer or 0 to leave it unset" }}
+    {{- end }}
+    sandbox_uid                  = {{ .Values.server.drivers.kubernetes.sandboxUid }}
+    {{- end }}
+    {{- if .Values.server.drivers.kubernetes.sandboxGid }}
+    {{- if not (regexMatch "^[1-9][0-9]*$" (toString .Values.server.drivers.kubernetes.sandboxGid)) }}
+    {{- fail "server.drivers.kubernetes.sandboxGid must be a positive integer or 0 to leave it unset" }}
+    {{- end }}
+    sandbox_gid                  = {{ .Values.server.drivers.kubernetes.sandboxGid }}
+    {{- end }}
     {{- if .Values.server.drivers.kubernetes.operatorNamespaceLabel }}
     operator_namespace_label     = {{ .Values.server.drivers.kubernetes.operatorNamespaceLabel | quote }}
     {{- end }}

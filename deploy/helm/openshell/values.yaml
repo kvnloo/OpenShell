@@ -358,6 +358,12 @@ server:
   # Kubernetes compute driver settings.
   drivers:
     kubernetes:
+      # -- Explicit sandbox process UID. 0 (default) leaves identity resolution to
+      # the driver (namespace SCC annotation or its built-in fallback).
+      sandboxUid: 0
+      # -- Explicit sandbox process GID. 0 (default) leaves GID resolution to the
+      # driver; when only sandboxUid is set, the driver uses that UID as the GID.
+      sandboxGid: 0
       # -- Allow caller driver JSON; external resources still require approval.
       allowDriverConfig: false
       resourceAdmission:
