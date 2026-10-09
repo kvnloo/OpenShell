@@ -30,6 +30,9 @@ pub mod enums;
 pub mod events;
 pub mod format;
 pub mod objects;
+mod trace;
+
+pub use trace::{TraceCorrelation, register_trace_correlation_extractor};
 pub mod tracing_layers;
 
 #[cfg(any(test, feature = "test-support"))]

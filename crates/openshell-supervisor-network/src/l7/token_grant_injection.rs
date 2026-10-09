@@ -17,12 +17,13 @@ use openshell_core::proto::{ProviderCredentialTokenGrant, ProviderProfileCredent
 use openshell_core::provider_credentials::ProviderCredentialSnapshot;
 use openshell_ocsf::{
     ActionId, ActivityId, DispositionId, Endpoint, HttpActivityBuilder, HttpRequest, SeverityId,
-    StatusId, Url as OcsfUrl, ctx::ctx as ocsf_ctx, ocsf_emit,
+    StatusId, Url as OcsfUrl, ctx::ctx as ocsf_ctx,
 };
 use tracing::warn;
 
 use crate::l7::provider::L7Request;
 use crate::l7::relay::L7EvalContext;
+use crate::telemetry::ocsf_emit;
 
 pub struct TokenGrantRequest<'a> {
     pub provider_key: &'a str,

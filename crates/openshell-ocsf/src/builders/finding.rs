@@ -12,6 +12,7 @@ use crate::objects::{Attack, Evidence, FindingInfo, Remediation};
 /// Builder for Detection Finding [2004] events.
 pub struct DetectionFindingBuilder<'a> {
     ctx: &'a EventContext,
+    trace: Option<crate::TraceCorrelation>,
     activity: ActivityId,
     severity: SeverityId,
     action: Option<ActionId>,
@@ -29,10 +30,18 @@ pub struct DetectionFindingBuilder<'a> {
 }
 
 impl<'a> DetectionFindingBuilder<'a> {
+    /// Set trace correlation explicitly instead of using the active span.
+    #[must_use]
+    pub fn trace(mut self, trace: crate::TraceCorrelation) -> Self {
+        self.trace = Some(trace);
+        self
+    }
+
     #[must_use]
     pub fn new(ctx: &'a EventContext) -> Self {
         Self {
             ctx,
+            trace: None,
             activity: ActivityId::Open,
             severity: SeverityId::Medium,
             action: None,
@@ -135,6 +144,10 @@ impl<'a> DetectionFindingBuilder<'a> {
             base.unmapped = Some(serde_json::Value::Object(self.unmapped));
         }
         self.ctx.apply_common_fields(&mut base, None, self.message);
+
+        if let Some(trace) = self.trace {
+            base.set_trace(trace);
+        }
 
         OcsfEvent::DetectionFinding(DetectionFindingEvent {
             base,
