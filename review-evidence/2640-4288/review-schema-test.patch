@@ -1,0 +1,46 @@
+diff --git a/crates/openshell-ocsf/src/builders/mod.rs b/crates/openshell-ocsf/src/builders/mod.rs
+index 4bed12d..e4c43c4 100644
+--- a/crates/openshell-ocsf/src/builders/mod.rs
++++ b/crates/openshell-ocsf/src/builders/mod.rs
+@@ -323,6 +323,41 @@ pub(crate) fn sample_events(ctx: &EventContext) -> Vec<(&'static str, crate::Ocs
+     ]
+ }
+ 
++#[cfg(test)]
++mod review_schema_overlay {
++    // #4288 builders/validator/downgrade unchanged; exact #2640 1.8 schemas overlaid.
++    #[test]
++    fn nine_builders_with_and_without_trace_validate_at_the_version_they_claim() {
++        use crate::format::downgrade::{downgrade_event, DowngradeOutcome};
++        use crate::validation::{load_class_schema_for_version, validate_required_fields};
++        use serde_json::json;
++        let ctx = super::test_sandbox_context();
++        for (class, event) in super::sample_events(&ctx) {
++            for with_trace in [false, true] {
++                let mut native = event.to_json().unwrap();
++                if with_trace {
++                    native["trace"] = json!({"uid": "0af7651916cd43dd8448eb211c80319c"});
++                    native["metadata"]["profiles"].as_array_mut().unwrap().push(json!("trace"));
++                }
++                for target in ["1.8.0", "1.3.0", "1.1.0"] {
++                    let mut value = native.clone();
++                    let outcome = downgrade_event(&mut value, target);
++                    let version = value["metadata"]["version"].as_str().unwrap();
++                    let schema = load_class_schema_for_version(version, class);
++                    validate_required_fields(&value, &schema);
++                    if outcome == DowngradeOutcome::Downgraded {
++                        assert!(value.get("trace").is_none());
++                        assert!(!value["metadata"]["profiles"].as_array().unwrap().contains(&json!("trace")));
++                    } else {
++                        assert_eq!(value, native);
++                    }
++                    println!("{class} trace={with_trace} target={target} actual={version}: {outcome:?}");
++                }
++            }
++        }
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;

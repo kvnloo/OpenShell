@@ -1,0 +1,56 @@
+[
+  {
+    "class": "base_event",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": false
+  },
+  {
+    "class": "network_activity",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": false
+  },
+  {
+    "class": "http_activity",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": true
+  },
+  {
+    "class": "ssh_activity",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": false
+  },
+  {
+    "class": "process_activity",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": false
+  },
+  {
+    "class": "detection_finding",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": false
+  },
+  {
+    "class": "application_lifecycle",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": false
+  },
+  {
+    "class": "device_config_state_change",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": false
+  },
+  {
+    "class": "api_activity",
+    "non_trace_attributes_identical": true,
+    "harry_has_trace": true,
+    "pr4288_has_trace": true
+  }
+]
