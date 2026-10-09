@@ -122,7 +122,10 @@ async fn doctor_check_fails_when_only_docker_is_unreachable() {
     assert!(clean.contains("Docker"), "missing Docker label:\n{clean}");
     assert!(clean.contains("FAILED"), "missing failed status:\n{clean}");
     assert!(clean.contains("DOCKER_HOST"), "missing guidance:\n{clean}");
-    assert!(clean.contains("docker info"), "missing command guidance:\n{clean}");
+    assert!(
+        clean.contains("docker info"),
+        "missing command guidance:\n{clean}"
+    );
 }
 
 #[tokio::test]
@@ -139,7 +142,10 @@ async fn doctor_check_passes_with_only_docker() {
     assert_eq!(code, 0, "doctor check should pass:\n{clean}");
     assert!(clean.contains("Docker"), "missing Docker label:\n{clean}");
     assert!(clean.contains("27.3.1"), "missing Docker version:\n{clean}");
-    assert!(clean.contains("All checks passed"), "missing success summary:\n{clean}");
+    assert!(
+        clean.contains("All checks passed"),
+        "missing success summary:\n{clean}"
+    );
 }
 
 #[tokio::test]
@@ -156,7 +162,10 @@ async fn doctor_check_passes_with_only_podman() {
     assert_eq!(code, 0, "doctor check should pass:\n{clean}");
     assert!(clean.contains("Podman"), "missing Podman label:\n{clean}");
     assert!(clean.contains("5.8.4"), "missing Podman version:\n{clean}");
-    assert!(!clean.contains("Docker"), "absent Docker should not be reported:\n{clean}");
+    assert!(
+        !clean.contains("Docker"),
+        "absent Docker should not be reported:\n{clean}"
+    );
 }
 
 #[tokio::test]
@@ -170,10 +179,16 @@ async fn doctor_check_passes_when_one_installed_runtime_is_healthy() {
     .await;
     let clean = strip_ansi(&output);
 
-    assert_eq!(code, 0, "healthy Podman should satisfy default doctor:\n{clean}");
+    assert_eq!(
+        code, 0,
+        "healthy Podman should satisfy default doctor:\n{clean}"
+    );
     assert!(clean.contains("Docker"), "missing Docker result:\n{clean}");
     assert!(clean.contains("Podman"), "missing Podman result:\n{clean}");
-    assert!(clean.contains("FAILED"), "missing failed Docker result:\n{clean}");
+    assert!(
+        clean.contains("FAILED"),
+        "missing failed Docker result:\n{clean}"
+    );
     assert!(
         clean.contains("At least one supported container runtime is ready"),
         "missing mixed-health summary:\n{clean}"
@@ -198,7 +213,10 @@ async fn doctor_check_passes_when_both_runtimes_are_healthy() {
     assert_eq!(code, 0, "both healthy runtimes should pass:\n{clean}");
     assert!(clean.contains("Docker"), "missing Docker result:\n{clean}");
     assert!(clean.contains("Podman"), "missing Podman result:\n{clean}");
-    assert!(clean.contains("All checks passed"), "missing success summary:\n{clean}");
+    assert!(
+        clean.contains("All checks passed"),
+        "missing success summary:\n{clean}"
+    );
 }
 
 #[tokio::test]
@@ -244,9 +262,15 @@ async fn doctor_check_driver_override_is_authoritative() {
     .await;
     let clean = strip_ansi(&output);
 
-    assert_ne!(code, 0, "targeted Docker check must not be rescued by Podman:\n{clean}");
+    assert_ne!(
+        code, 0,
+        "targeted Docker check must not be rescued by Podman:\n{clean}"
+    );
     assert!(clean.contains("Docker"), "missing Docker result:\n{clean}");
-    assert!(!clean.contains("Podman"), "targeted check should ignore Podman:\n{clean}");
+    assert!(
+        !clean.contains("Podman"),
+        "targeted check should ignore Podman:\n{clean}"
+    );
 }
 
 #[tokio::test]
@@ -265,7 +289,10 @@ async fn doctor_check_selected_podman_missing_is_not_rescued_by_docker() {
         clean.contains("podman is not installed or not on PATH"),
         "missing selected-runtime error:\n{clean}"
     );
-    assert!(!clean.contains("Docker"), "targeted check should ignore Docker:\n{clean}");
+    assert!(
+        !clean.contains("Docker"),
+        "targeted check should ignore Docker:\n{clean}"
+    );
 }
 
 #[tokio::test]
@@ -297,8 +324,14 @@ async fn doctor_check_podman_without_override_uses_discovered_local_socket() {
     .await;
     let clean = strip_ansi(&output);
 
-    assert_eq!(code, 0, "discovered local Podman socket should pass:\n{clean}");
-    assert!(clean.contains("5.8.4"), "missing Podman server version:\n{clean}");
+    assert_eq!(
+        code, 0,
+        "discovered local Podman socket should pass:\n{clean}"
+    );
+    assert!(
+        clean.contains("5.8.4"),
+        "missing Podman server version:\n{clean}"
+    );
     assert!(
         clean.contains("/tmp/openshell-test-discovered-podman.sock"),
         "doctor should report the discovered local socket:\n{clean}"
@@ -396,7 +429,10 @@ async fn doctor_check_podman_socket_override_is_authoritative() {
         .env("HOME", tmpdir.path())
         .env("PATH", &bin_dir)
         .env("OPENSHELL_PODMAN_SOCKET", socket)
-        .env("CONTAINER_HOST", "ssh://wrong.example.invalid/run/podman/podman.sock")
+        .env(
+            "CONTAINER_HOST",
+            "ssh://wrong.example.invalid/run/podman/podman.sock",
+        )
         .env("CONTAINER_CONNECTION", "wrong-connection")
         .env_remove("OPENSHELL_GATEWAY")
         .env_remove("OPENSHELL_GATEWAY_ENDPOINT")
@@ -415,7 +451,10 @@ async fn doctor_check_podman_socket_override_is_authoritative() {
         0,
         "OpenShell socket override should win over Podman connection state:\n{clean}"
     );
-    assert!(clean.contains(socket), "missing configured socket path:\n{clean}");
+    assert!(
+        clean.contains(socket),
+        "missing configured socket path:\n{clean}"
+    );
 }
 
 #[tokio::test]
@@ -430,7 +469,10 @@ async fn doctor_check_runtime_probe_times_out() {
     let clean = strip_ansi(&output);
 
     assert_ne!(code, 0);
-    assert!(clean.contains("timed out after 5s"), "missing timeout diagnostic:\n{clean}");
+    assert!(
+        clean.contains("timed out after 5s"),
+        "missing timeout diagnostic:\n{clean}"
+    );
     assert!(
         elapsed.as_secs() < 8,
         "single runtime timeout should be bounded near five seconds (took {elapsed:?})"
@@ -449,7 +491,10 @@ async fn doctor_check_default_probes_run_concurrently() {
     let clean = strip_ansi(&output);
 
     assert_ne!(code, 0);
-    assert!(clean.matches("timed out after 5s").count() >= 2, "missing timeout results:\n{clean}");
+    assert!(
+        clean.matches("timed out after 5s").count() >= 2,
+        "missing timeout results:\n{clean}"
+    );
     assert!(
         elapsed.as_secs() < 8,
         "two five-second probes should run concurrently, not serially (took {elapsed:?})"
