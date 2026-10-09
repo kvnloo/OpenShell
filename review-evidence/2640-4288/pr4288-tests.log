@@ -1,0 +1,238 @@
+   Compiling openshell-ocsf v0.0.0 (/workspace/scratch/openshell-schema/pr4288/crates/openshell-ocsf)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.27s
+     Running unittests src/lib.rs (/workspace/scratch/openshell-schema/target/debug/deps/openshell_ocsf-21650ca5d90933e1)
+
+running 172 tests
+test builders::api_activity::tests::test_api_activity_builder_without_ai_model ... ok
+test builders::api_activity::tests::test_model_name_sanitized ... ok
+test builders::api_activity::tests::test_model_name_truncated ... ok
+test builders::api_activity::tests::test_api_activity_builder_with_ai_model ... ok
+test builders::base::tests::test_base_event_builder ... ok
+test builders::config::tests::test_config_state_change_builder ... ok
+test builders::finding::tests::test_detection_finding_builder ... ok
+test builders::http::tests::test_http_activity_builder ... ok
+test builders::http::tests::test_http_activity_builder_with_status_detail ... ok
+test builders::lifecycle::tests::test_app_lifecycle_builder ... ok
+test builders::process::tests::test_process_activity_builder_launch ... ok
+test builders::network::tests::test_network_activity_builder ... ok
+test builders::process::tests::test_process_activity_builder_terminate ... ok
+test builders::ssh::tests::test_ssh_activity_builder ... ok
+test builders::tests::test_sandbox_context_container ... ok
+test builders::tests::test_sandbox_context_device ... ok
+test builders::tests::test_sandbox_context_metadata ... ok
+test builders::tests::test_sandbox_context_proxy_endpoint ... ok
+test enums::action::tests::test_action_json_roundtrip ... ok
+test enums::action::tests::test_action_labels ... ok
+test enums::activity::tests::maps_http_methods_to_http_activity_ids ... ok
+test enums::activity::tests::test_activity_http_labels ... ok
+test enums::activity::tests::test_activity_json_roundtrip ... ok
+test enums::activity::tests::test_activity_network_labels ... ok
+test enums::activity::tests::test_activity_process_labels ... ok
+test enums::auth::tests::test_auth_type_integer_values ... ok
+test enums::auth::tests::test_auth_type_json_roundtrip ... ok
+test enums::auth::tests::test_auth_type_labels ... ok
+test enums::connection_direction::tests::connection_direction_json_roundtrip ... ok
+test enums::device_type::tests::device_type_display_uses_schema_labels ... ok
+test enums::device_type::tests::device_type_json_roundtrip ... ok
+test enums::disposition::tests::test_disposition_integer_values ... ok
+test enums::disposition::tests::test_disposition_json_roundtrip ... ok
+test enums::disposition::tests::test_disposition_labels ... ok
+test enums::http_method::tests::test_from_str_non_standard ... ok
+test enums::http_method::tests::test_from_str_standard_methods ... ok
+test enums::http_method::tests::test_json_roundtrip ... ok
+test enums::http_method::tests::test_json_roundtrip_other ... ok
+test enums::launch::tests::test_launch_type_json_roundtrip ... ok
+test enums::launch::tests::test_launch_type_labels ... ok
+test enums::os_type::tests::os_type_from_platform_names ... ok
+test enums::os_type::tests::os_type_json_roundtrip ... ok
+test enums::security::tests::test_confidence_labels ... ok
+test enums::security::tests::test_risk_level_labels ... ok
+test enums::security::tests::test_security_json_roundtrips ... ok
+test enums::security::tests::test_security_level_labels ... ok
+test enums::severity::tests::test_severity_integer_values ... ok
+test enums::severity::tests::test_severity_json_roundtrip ... ok
+test enums::severity::tests::test_severity_labels ... ok
+test enums::severity::tests::test_severity_shorthand_chars ... ok
+test enums::status::tests::test_state_json_roundtrip ... ok
+test enums::status::tests::test_state_labels ... ok
+test enums::status::tests::test_status_json_roundtrip ... ok
+test enums::status::tests::test_status_labels ... ok
+test events::api_activity::tests::test_api_activity_serialization ... ok
+test builders::tests::test_emitted_device_matches_vendored_schema ... ok
+test events::api_activity::tests::test_api_activity_roundtrip ... ok
+test events::base_event::tests::test_base_event_data_creation ... ok
+test events::app_lifecycle::tests::test_app_lifecycle_serialization ... ok
+test events::base_event::tests::test_base_event_serialization ... ok
+test events::base_event::tests::test_type_uid_computation ... ok
+test events::config_state_change::tests::test_config_state_change_serialization ... ok
+test events::detection_finding::tests::test_detection_finding_serialization ... ok
+test events::http_activity::tests::test_http_activity_serialization ... ok
+test events::network_activity::tests::test_network_activity_serialization ... ok
+test events::process_activity::tests::test_process_activity_serialization ... ok
+test events::tests::test_deserialize_missing_class_uid_errors ... ok
+test events::tests::test_deserialize_unknown_class_uid_errors ... ok
+test events::ssh_activity::tests::test_ssh_activity_serialization ... ok
+test events::tests::test_roundtrip_api_activity_with_ai_model ... ok
+test events::tests::test_roundtrip_base_event ... ok
+test events::tests::test_roundtrip_application_lifecycle ... ok
+test events::tests::test_roundtrip_config_state_change ... ok
+test events::tests::test_roundtrip_detection_finding ... ok
+test events::tests::test_roundtrip_http_activity ... ok
+test events::tests::test_roundtrip_network_activity ... ok
+test events::tests::test_roundtrip_process_activity ... ok
+test events::tests::test_roundtrip_ssh_activity ... ok
+test format::downgrade::tests::current_or_newer_targets_are_not_needed ... ok
+test format::downgrade::tests::complete_http_and_network_events_are_downgraded ... ok
+test format::downgrade::tests::network_endpoint_requirements_follow_target_version ... ok
+test builders::tests::every_builder_emits_schema_conformant_events ... ok
+test format::downgrade::tests::removed_attributes_are_kept_under_unmapped ... ok
+test format::downgrade::tests::short_target_versions_are_labelled_in_full ... ok
+test format::downgrade::tests::unsupported_target_versions_stay_native ... ok
+test format::downgrade::tests::vendored_schemas_cover_the_native_version_and_every_target ... ok
+test format::jsonl::tests::test_optional_fields_omitted ... ok
+test format::jsonl::tests::test_to_json_has_required_fields ... ok
+test format::jsonl::tests::test_to_json_line_format ... ok
+test format::shorthand::tests::detection_finding_shorthand_escapes_control_characters_and_delimiters ... ok
+test format::shorthand::tests::test_base_event_selects_unmapped_fields_in_key_order ... ok
+test format::shorthand::tests::test_base_event_shorthand ... ok
+test format::shorthand::tests::test_config_state_change_shorthand ... ok
+test format::shorthand::tests::test_config_state_change_shorthand_includes_auto_approve_fields ... ok
+test format::shorthand::tests::test_detection_finding_shorthand ... ok
+test format::shorthand::tests::test_detection_finding_shorthand_uses_activity_and_safe_unmapped_attributes ... ok
+test format::shorthand::tests::test_format_ts ... ok
+test format::shorthand::tests::test_format_ts_invalid_timestamp_does_not_panic ... ok
+test format::shorthand::tests::test_http_activity_shorthand ... ok
+test format::shorthand::tests::test_http_activity_shorthand_denied_shows_reason ... ok
+test format::shorthand::tests::test_http_activity_shorthand_includes_unmapped_attributes ... ok
+test format::shorthand::tests::test_http_activity_shorthand_mcp_shows_tool_for_allow_and_deny ... ok
+test format::shorthand::tests::test_http_activity_shorthand_non_default_port ... ok
+test format::shorthand::tests::test_lifecycle_shorthand ... ok
+test format::shorthand::tests::test_network_activity_shorthand_allow ... ok
+test format::shorthand::tests::test_network_activity_shorthand_allowed_no_reason ... ok
+test format::shorthand::tests::test_network_activity_shorthand_bypass ... ok
+test format::shorthand::tests::test_network_activity_shorthand_denied_shows_reason ... ok
+test format::shorthand::tests::test_network_activity_shorthand_shows_message_when_no_key_fields ... ok
+test format::shorthand::tests::test_process_activity_shorthand_launch ... ok
+test format::shorthand::tests::test_process_activity_shorthand_terminate ... ok
+test format::shorthand::tests::test_severity_char_mapping ... ok
+test format::shorthand::tests::test_shorthand_reason_keeps_full_endpoint_and_policy ... ok
+test format::shorthand::tests::test_shorthand_reason_normalizes_newlines ... ok
+test format::shorthand::tests::test_shorthand_reason_truncated_beyond_max_len ... ok
+test format::shorthand::tests::test_shorthand_reason_truncates_on_multibyte_char_boundary ... ok
+test format::shorthand::tests::test_ssh_activity_shorthand ... ok
+test objects::ai_model::tests::test_ai_model_roundtrip ... ok
+test objects::ai_model::tests::test_ai_model_serialization ... ok
+test objects::api::tests::test_api_serialization ... ok
+test objects::attack::tests::test_attack_mitre ... ok
+test objects::connection::tests::test_connection_info ... ok
+test objects::container::tests::test_container_minimal ... ok
+test objects::container::tests::test_container_serialization ... ok
+test objects::device::tests::device_round_trips ... ok
+test objects::device::tests::gateway_device_does_not_inherit_the_sandbox_type ... ok
+test objects::device::tests::gateway_installations_with_identical_hostnames_have_distinct_uids ... ok
+test objects::device::tests::gateway_replicas_share_the_installation_uid ... ok
+test objects::device::tests::os_pretty_names_capitalize_known_platforms ... ok
+test objects::device::tests::sandbox_device_type_is_independent_of_its_os ... ok
+test objects::device::tests::test_device_for_current_os ... ok
+test objects::device::tests::test_device_linux ... ok
+test objects::device::tests::test_device_windows ... ok
+test objects::endpoint::tests::local_service_endpoint_names_the_service_and_socket ... ok
+test objects::endpoint::tests::test_endpoint_domain ... ok
+test format::downgrade::tests::downgrade_definitions_match_vendored_schemas ... ok
+test objects::endpoint::tests::test_endpoint_ip ... ok
+test objects::finding::tests::test_evidence_from_pairs ... ok
+test objects::finding::tests::test_finding_info_creation ... ok
+test objects::finding::tests::test_remediation ... ok
+test objects::firewall_rule::tests::test_firewall_rule_serialization ... ok
+test objects::http::tests::test_http_request_serialization ... ok
+test objects::http::tests::test_http_response ... ok
+test objects::http::tests::test_url_display_string_default_port ... ok
+test objects::http::tests::test_url_display_string_no_port ... ok
+test objects::http::tests::test_url_display_string_non_default_port ... ok
+test objects::metadata::tests::test_metadata_serialization ... ok
+test objects::metadata::tests::test_metadata_with_log_source ... ok
+test objects::process::tests::test_actor_serialization ... ok
+test objects::process::tests::test_process_creation ... ok
+test objects::process::tests::test_process_from_bypass ... ok
+test objects::process::tests::test_process_from_bypass_deep_chain ... ok
+test objects::process::tests::test_process_serialization ... ok
+test objects::process::tests::test_process_with_parent ... ok
+test tracing_layers::event_bridge::tests::test_clone_current_event_is_non_consuming ... ok
+test tracing_layers::event_bridge::tests::test_emit_clears_thread_local_after_dispatch ... ok
+test tracing_layers::event_bridge::tests::test_routed_emit_writes_full_json_and_clears ... ok
+test tracing_layers::event_bridge::tests::test_routed_and_bare_paths_emit_equivalent_json ... ok
+test tracing_layers::jsonl_layer::tests::convertible_events_are_written_at_the_target_version ... ok
+test tracing_layers::jsonl_layer::tests::test_jsonl_layer_creation ... ok
+test tracing_layers::shorthand_layer::tests::test_non_ocsf_fallback_includes_timestamp ... ok
+test tracing_layers::shorthand_layer::tests::test_shorthand_layer_creation ... ok
+test tracing_layers::shorthand_layer::tests::test_shorthand_layer_with_non_ocsf_toggle ... ok
+test tracing_layers::jsonl_layer::tests::events_kept_native_are_written_unchanged_and_tallied ... ok
+test validation::schema::tests::rejects_attributes_the_class_does_not_define ... ok
+test format::downgrade::tests::request_only_http_stays_native ... ok
+test validation::schema::tests::rejects_missing_required_attributes_in_nested_objects ... ok
+test validation::schema::tests::network_and_http_require_at_least_one_non_null_field ... ok
+test validation::schema::tests::test_validate_enum_value_valid ... ok
+test validation::schema::tests::test_validate_required_fields_passes ... ok
+test validation::schema::tests::test_load_class_schemas ... ok
+test format::downgrade::tests::every_sample_event_claims_a_version_it_conforms_to ... ok
+
+test result: ok. 172 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/event_identity.rs (/workspace/scratch/openshell-schema/target/debug/deps/event_identity-55b1e8e769de5d34)
+
+running 6 tests
+test each_event_gets_its_own_metadata_uid ... ok
+test device_identifies_the_sandbox_environment ... ok
+test a_container_without_an_image_omits_the_image ... ok
+test metadata_uid_is_no_longer_the_sandbox_id ... ok
+test the_sandbox_id_is_carried_by_the_container ... ok
+test event_identity_survives_serialization ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gateway_context.rs (/workspace/scratch/openshell-schema/target/debug/deps/gateway_context-b26e5f7c8d3a86ca)
+
+running 7 tests
+test gateway_events_report_the_gateway_product ... ok
+test gateway_events_identify_the_device_by_operator_assigned_name ... ok
+test gateway_events_report_the_gateway_os ... ok
+test gateway_events_omit_the_container_object ... ok
+test supervisor_events_still_report_the_supervisor_product ... ok
+test supervisor_events_preserve_platform_os ... ok
+test supervisor_events_still_carry_their_sandbox_container ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/roundtrip.rs (/workspace/scratch/openshell-schema/target/debug/deps/roundtrip-c8a541e9b6287b14)
+
+running 9 tests
+test base_event_round_trips ... ok
+test application_lifecycle_round_trips ... ok
+test api_activity_round_trips ... ok
+test detection_finding_round_trips ... ok
+test device_config_state_change_round_trips ... ok
+test http_activity_round_trips ... ok
+test ssh_activity_round_trips ... ok
+test process_activity_round_trips ... ok
+test network_activity_round_trips ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests openshell_ocsf
+
+running 2 tests
+test crates/openshell-ocsf/src/builders/mod.rs - builders::impl_builder_setters (line 13) ... ignored
+test crates/openshell-ocsf/src/tracing_layers/event_bridge.rs - tracing_layers::event_bridge::ocsf_emit (line 93) ... ignored
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test crates/openshell-ocsf/src/builders/ssh.rs - builders::ssh::SshActivityBuilder<'a,MissingSshEndpoint>::new (line 42) - compile fail ... ok
+test crates/openshell-ocsf/src/builders/http.rs - builders::http::HttpActivityBuilder<'a,MissingHttpContext>::new (line 44) - compile fail ... ok
+test crates/openshell-ocsf/src/builders/process.rs - builders::process::ProcessActivityBuilder<'a,MissingActor>::new (line 39) - compile fail ... ok
+test crates/openshell-ocsf/src/builders/network.rs - builders::network::NetworkActivityBuilder<'a,MissingNetworkEndpoint>::new (line 46) - compile fail ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+all doctests ran in 0.12s; merged doctests compilation took 0.08s

@@ -1,0 +1,22 @@
+   Compiling openshell-ocsf v0.0.0 (/workspace/scratch/openshell-schema/review/crates/openshell-ocsf)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.34s
+     Running unittests src/lib.rs (/workspace/scratch/openshell-schema/target/debug/deps/openshell_ocsf-21650ca5d90933e1)
+
+running 1 test
+network_activity trace=false target=1.8.0 actual=1.8.0: NotNeeded
+network_activity trace=false target=1.3.0 actual=1.3.0: Downgraded
+network_activity trace=false target=1.1.0 actual=1.1.0: Downgraded
+
+thread 'builders::review_schema_overlay::nine_builders_with_and_without_trace_validate_at_the_version_they_claim' (5647) panicked at crates/openshell-ocsf/src/validation/schema.rs:117:9:
+Undefined attribute 'event.trace' in OCSF 1.8.0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test builders::review_schema_overlay::nine_builders_with_and_without_trace_validate_at_the_version_they_claim ... FAILED
+
+failures:
+
+failures:
+    builders::review_schema_overlay::nine_builders_with_and_without_trace_validate_at_the_version_they_claim
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 172 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `-p openshell-ocsf --lib`

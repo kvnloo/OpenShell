@@ -1,0 +1,15 @@
+   Compiling openshell-ocsf v0.0.0 (/workspace/scratch/openshell-schema/review/crates/openshell-ocsf)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.45s
+     Running tests/review_trace_downgrade.rs (/workspace/scratch/openshell-schema/target/debug/deps/review_trace_downgrade-cc92cec881c933a5)
+
+running 3 tests
+test native_target_does_not_strip_trace_or_existing_unmapped_data ... ok
+1.1.0: KeptNative { reason: "src_endpoint is required by OCSF 1.1.0" }
+1.3.0: KeptNative { reason: "dst_endpoint is required by OCSF 1.3.0" }
+test unsatisfied_targets_keep_native_trace_and_profile_atomically ... ok
+1.1.0: {"action":"Denied","action_id":2,"activity_id":0,"activity_name":"Unknown","category_name":"Network Activity","category_uid":4,"class_name":"Network Activity","class_uid":4001,"device":{"hostname":"test","os":{"name":"Linux","type":"Linux","type_id":200},"type":"Sandbox","type_id":99},"dst_endpoint":{"ip":"192.0.2.1","port":443},"metadata":{"product":{"name":"OpenShell Sandbox Supervisor","vendor_name":"OpenShell","version":"0.0.0"},"profiles":["security_control","network_proxy","container","host"],"uid":"725200a4-b998-4619-b417-868c574cbe5c","version":"1.1.0"},"proxy_endpoint":{"ip":"127.0.0.1","port":3128},"severity":"Informational","severity_id":1,"src_endpoint":{"ip":"192.0.2.5","port":51234},"time":1791581438609,"type_name":"Network Activity: Unknown","type_uid":400100,"unmapped":{"downgraded_attributes":{"container":{"image":{"name":"example/sandbox:test"},"name":"test-sandbox","uid":"sandbox-test"},"is_src_dst_assignment_known":true,"trace":{"uid":"0af7651916cd43dd8448eb211c80319c"}},"downgraded_from":"1.8.0","trace":{"uid":"source-owned-unmapped-trace"}}}
+1.3.0: {"action":"Denied","action_id":2,"activity_id":0,"activity_name":"Unknown","category_name":"Network Activity","category_uid":4,"class_name":"Network Activity","class_uid":4001,"device":{"hostname":"test","os":{"name":"Linux","type":"Linux","type_id":200},"type":"Sandbox","type_id":99},"dst_endpoint":{"ip":"192.0.2.1","port":443},"metadata":{"product":{"name":"OpenShell Sandbox Supervisor","vendor_name":"OpenShell","version":"0.0.0"},"profiles":["security_control","network_proxy","container","host"],"uid":"cd8e6110-ba45-439f-96b3-803a6f1d07cd","version":"1.3.0"},"proxy_endpoint":{"ip":"127.0.0.1","port":3128},"severity":"Informational","severity_id":1,"src_endpoint":{"ip":"192.0.2.5","port":51234},"time":1791581438614,"type_name":"Network Activity: Unknown","type_uid":400100,"unmapped":{"downgraded_attributes":{"container":{"image":{"name":"example/sandbox:test"},"name":"test-sandbox","uid":"sandbox-test"},"is_src_dst_assignment_known":true,"trace":{"uid":"0af7651916cd43dd8448eb211c80319c"}},"downgraded_from":"1.8.0","trace":{"uid":"source-owned-unmapped-trace"}}}
+test successful_targets_remove_only_schema_trace_and_preserve_unmapped_correlation ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

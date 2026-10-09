@@ -2,10 +2,7 @@ diff --git a/crates/openshell-ocsf/src/builders/mod.rs b/crates/openshell-ocsf/s
 index 4bed12d..e4c43c4 100644
 --- a/crates/openshell-ocsf/src/builders/mod.rs
 +++ b/crates/openshell-ocsf/src/builders/mod.rs
-@@ -323,6 +323,41 @@ pub(crate) fn sample_events(ctx: &EventContext) -> Vec<(&'static str, crate::Ocs
-     ]
- }
- 
+@@ -325,0 +326,35 @@ pub(crate) fn sample_events(ctx: &EventContext) -> Vec<(&'static str, crate::Ocs
 +#[cfg(test)]
 +mod review_schema_overlay {
 +    // #4288 builders/validator/downgrade unchanged; exact #2640 1.8 schemas overlaid.
@@ -41,6 +38,3 @@ index 4bed12d..e4c43c4 100644
 +    }
 +}
 +
- #[cfg(test)]
- mod tests {
-     use super::*;
