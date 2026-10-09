@@ -1,0 +1,15 @@
+Thanks @HarryMoss — reviewed `3fae097a5d4355eeff77746f3ea90e89228455e3` on Linux x86_64 / Rust 1.95.0. **No blocking finding in this bounded review.** The head remains unchanged.
+
+Executed on your exact branch:
+
+- `cargo +1.95.0 test --locked -p openshell-ocsf -p openshell-otel`: **220 passed**, two doc examples ignored. Covers sampled/unsampled/invalid context, explicit overrides, automatic/routed enrichment, all nine builders, and both downgrade contracts.
+- `cargo +1.95.0 test --locked -p openshell-supervisor-network --lib deny -- --test-threads=2`: **59 passed**, including all eight new correlation checks. Real emission helpers and the loopback OTLP receiver confirm default-level L4/L7 deny correlation and allowed/operational controls. [`telemetry.rs:63–86`](https://github.com/HarryMoss/OpenShell/blob/3fae097a5d4355eeff77746f3ea90e89228455e3/crates/openshell-supervisor-network/src/telemetry.rs#L63) keeps the INFO span current through actual synchronous OCSF dispatch.
+
+Two integration boundaries to retain:
+
+1. **DEBUG parenting is conditional.** [`proxy.rs:3026`](https://github.com/HarryMoss/OpenShell/blob/3fae097a5d4355eeff77746f3ea90e89228455e3/crates/openshell-supervisor-network/src/proxy.rs#L3026) drops the connect span before L7 relay. Later L7 denies can therefore be separate roots even at DEBUG. Your docs already qualify the live-parent condition; retain that qualification in the PR summary. The DEBUG regression proves staged L4 parenting, not a full CONNECT-to-L7 journey.
+2. **If #4288 lands first**, retain your Trace schemas, let its schema-driven downgrade replace the separate strip-list implementation, and adapt the two assertions to `DowngradeOutcome::Downgraded`. Successful 1.1/1.3 output must lack top-level `trace` and its profile, while correlation under `unmapped` may remain. `KeptNative` must retain the whole 1.8 event, including trace/profile.
+
+The separate schema review pinned @zanetworker's #4288 at `78621e8bb1fb9af4c91f9cf8dd5c3ebffc62b963`: **3 isolated downgrade checks passed**, plus **one 54-case matrix** using Harry's schema files over #4288's unchanged production functions. Results: 18 native no-ops, 24 successful downgrades, 12 correct kept-native outcomes; every result validates against its declared version. Commands were `cargo test --locked -p openshell-ocsf --features test-support --test review_trace_downgrade -- --nocapture` and `cargo test --locked -p openshell-ocsf --lib review_schema_overlay -- --nocapture`. [Pinned receipt, source locations, replay fixtures and logs](https://github.com/kvnloo/OpenShell/blob/2e894d51aede75d92205b1659a7573c1b2cc3744/review-evidence/2640-4288/RESULTS.md). This independently confirms your earlier nine-builder check; it is a **schema overlay, not a compiled full implementation rebase**. Suite counts overlap and should not be summed as unique regressions.
+
+Credit to Harry for the implementation, @rhuss for the schema/lifetime design and planned deployed check, and @zanetworker for #4288. These local checks do not establish deployed Collector/Tempo delivery; that validation remains with @rhuss. No competing implementation or PR created.
