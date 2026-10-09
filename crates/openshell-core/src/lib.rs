@@ -41,6 +41,7 @@ pub mod net;
 #[cfg(feature = "oauth")]
 pub mod oauth;
 pub mod paths;
+pub mod podman_socket_discovery;
 pub mod policy;
 pub use openshell_policy_schema::yaml;
 pub mod policy_identity;

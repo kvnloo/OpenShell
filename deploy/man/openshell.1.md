@@ -139,7 +139,7 @@ development task, or behind a cloud reverse proxy.
 :   Open the real-time TUI dashboard.
 
 **doctor check**
-:   Validate local Docker prerequisites for standalone gateway development.
+:   Validate local Docker and Podman prerequisites for standalone gateway development. Use `--driver docker|podman` to require a specific runtime.
     For package-managed gateways, prefer systemd, journalctl, kubectl, or Helm
     diagnostics.
 

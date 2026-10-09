@@ -37,6 +37,7 @@ PODMAN_CI_TESTS=(
   local_driver_token_restart
   no_proxy
   podman_corporate_proxy
+  podman_doctor
   podman_gateway_start
   podman_host_gateway
   podman_oci_identity

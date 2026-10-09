@@ -100,6 +100,11 @@ path = "tests/local_driver_token_restart.rs"
 required-features = ["e2e"]
 
 [[test]]
+name = "podman_doctor"
+path = "tests/podman_doctor.rs"
+required-features = ["e2e-podman"]
+
+[[test]]
 name = "ephemeral_cleanup"
 path = "tests/ephemeral_cleanup.rs"
 required-features = ["e2e"]
