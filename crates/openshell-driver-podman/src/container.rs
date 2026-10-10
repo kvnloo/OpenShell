@@ -1922,7 +1922,7 @@ mod tests {
             ..Default::default()
         });
         let config = test_config();
-        let limits = build_resource_limits(&sandbox, &config);
+        let limits = build_resource_limits(&sandbox, &config).unwrap();
 
         assert_eq!(limits.cpu.quota, 50_000);
         assert_eq!(limits.memory.limit, 2 * 1024 * 1024 * 1024);
@@ -1940,7 +1940,7 @@ mod tests {
         let sandbox = test_sandbox("test-id", "test-name");
         let mut config = test_config();
         config.sandbox_pids_limit = None;
-        let limits = build_resource_limits(&sandbox, &config);
+        let limits = build_resource_limits(&sandbox, &config).unwrap();
 
         assert!(limits.pids.is_none());
     }

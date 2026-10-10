@@ -2936,6 +2936,86 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn validate_sandbox_create_accepts_representable_resource_limits() {
+        use openshell_core::proto::compute::v1::{
+            CpuResourceRequirements, MemoryResourceRequirements,
+        };
+
+        let driver = PodmanComputeDriver::for_tests(PodmanComputeConfig::default());
+        for requirements in [
+            None,
+            Some(ResourceRequirements {
+                cpu: Some(CpuResourceRequirements {
+                    quantity: Some("500m".to_string()),
+                }),
+                memory: Some(MemoryResourceRequirements {
+                    quantity: Some("512Mi".to_string()),
+                }),
+                ..Default::default()
+            }),
+        ] {
+            let sandbox = DriverSandbox {
+                spec: Some(DriverSandboxSpec {
+                    resource_requirements: requirements,
+                    ..Default::default()
+                }),
+                ..Default::default()
+            };
+            driver.validate_sandbox_create(&sandbox).await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn validate_sandbox_create_rejects_cpu_below_podman_quota_resolution() {
+        use openshell_core::proto::compute::v1::CpuResourceRequirements;
+
+        let driver = PodmanComputeDriver::for_tests(PodmanComputeConfig::default());
+        let sandbox = DriverSandbox {
+            spec: Some(DriverSandboxSpec {
+                resource_requirements: Some(ResourceRequirements {
+                    cpu: Some(CpuResourceRequirements {
+                        quantity: Some("0.000001".to_string()),
+                    }),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let err = driver
+            .validate_sandbox_create(&sandbox)
+            .await
+            .expect_err("sub-quota CPU limit must fail preflight");
+        assert!(err.to_string().to_ascii_lowercase().contains("cpu"));
+    }
+
+    #[tokio::test]
+    async fn validate_sandbox_create_rejects_memory_overflow() {
+        use openshell_core::proto::compute::v1::MemoryResourceRequirements;
+
+        let driver = PodmanComputeDriver::for_tests(PodmanComputeConfig::default());
+        let sandbox = DriverSandbox {
+            spec: Some(DriverSandboxSpec {
+                resource_requirements: Some(ResourceRequirements {
+                    memory: Some(MemoryResourceRequirements {
+                        quantity: Some("16Ei".to_string()),
+                    }),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let err = driver
+            .validate_sandbox_create(&sandbox)
+            .await
+            .expect_err("overflowed memory limit must fail preflight");
+        assert!(err.to_string().to_ascii_lowercase().contains("memory"));
+    }
+
+    #[tokio::test]
     async fn validate_sandbox_create_accepts_default_gpu_with_inventory() {
         use openshell_core::proto::compute::v1::DriverSandboxSpec;
 
