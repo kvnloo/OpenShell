@@ -67,6 +67,10 @@ message MiddlewareManifest {
   // this post-authentication consistency check.
   string expected_audience = 4;
   // Supervisor-middleware protocol metadata. Required for negotiation.
+  // Set protocol_version to 1.0 and advertise
+  // "openshell.supervisor-middleware.contract" in supported_capabilities.
+  // The gateway advertises the same capability; include it in
+  // required_capabilities when the middleware requires that contract.
   openshell.extension.v1.PeerMetadata extension = 5;
 }
 

@@ -97,6 +97,22 @@ or supervisor middleware service, both peers exchange
 implementation versions, supported capabilities, and capabilities required
 from the other peer. Family-specific features remain in their typed protocols.
 
+Use protocol version `1.0` and advertise the base capability for your
+extension family in `supported_capabilities`:
+
+| Extension family | Base capability |
+| --- | --- |
+| Compute driver | `openshell.compute.contract` |
+| Credential driver | `openshell.credentials.contract` |
+| Gateway interceptor | `openshell.gateway-interceptor.contract` |
+| Supervisor middleware | `openshell.supervisor-middleware.contract` |
+
+For example, a supervisor middleware's `MiddlewareManifest.extension` can use
+`protocol_version` with `major: 1` and `minor: 0`, and include
+`openshell.supervisor-middleware.contract` in both `supported_capabilities` and
+`required_capabilities`. The gateway also advertises that capability. Set
+`implementation_name` and `implementation_version` to identify your service.
+
 OpenShell accepts compatible minor versions when both capability requirements
 are satisfied. It rejects different major versions, missing metadata, or an
 unmet required capability during startup. Built-in and external service
