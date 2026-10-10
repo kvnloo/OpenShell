@@ -40,8 +40,8 @@
     },
     {
       "path": "reviews/oidc-preabort-20261010/README.md",
-      "bytes": 6335,
-      "sha256": "8f235196f43e570da0c4c754e86ff804f4b5bd9a3789163d580662ab847e29b1"
+      "bytes": 7316,
+      "sha256": "d05f2f3aa77cf8677ca229a289c89806923565835f222df72ce41bd0a9f25d7e"
     },
     {
       "path": "reviews/oidc-preabort-20261010/logs.json",
@@ -74,5 +74,19 @@
       "sha256": "16d8c483215e186346ce40325c4293bcd4ec45c92b02d39facef5a304ab5155b"
     }
   ],
-  "manifestSelfHash": "Excluded from this list to avoid recursion; the complete repository tree is externally certified."
+  "manifestSelfHash": "Excluded from this list to avoid recursion; the complete repository tree is externally certified.",
+  "researchCarrierLicenseGate": {
+    "status": "FAIL",
+    "checker": "python3 scripts/update_license_headers.py --check reviews/oidc-preabort-20261010/*.mjs",
+    "exitCode": 1,
+    "missingHeaderFiles": [
+      "native-lifecycle-controls.mjs",
+      "oidc-preaborted-consumer.mjs",
+      "run-consumer-with-deadline.mjs",
+      "run-independent-with-deadline.mjs"
+    ],
+    "historicalFrozenCommit": "204ae1cbe1302569a9d1692f58dfbc49a266e0e3",
+    "scriptBodiesAndHashesUnchanged": true,
+    "scope": "Research-carrier limitation only; existing source/test file headers retained. No corporate ownership asserted for new standalone scripts; checker unchanged."
+  }
 }

@@ -8,6 +8,12 @@ The candidate adds one guard in `sdk/typescript/src/oidc.ts`, immediately after 
 
 This is a downstream candidate, not an upstream submission or maintainer acceptance. The implementation being corrected was introduced by Seth Jennings in [OpenShell PR #2907](https://github.com/NVIDIA/OpenShell/pull/2907), commit `5206bc51b2257cf36ac1cdd9fd8e4567db204b3a`, closing [issue #2803](https://github.com/NVIDIA/OpenShell/issues/2803).
 
+## Research-carrier license gate: FAIL
+
+A follow-on canonical license check found that the four standalone `.mjs` evidence scripts lack the required SPDX header. `python3 scripts/update_license_headers.py --check reviews/oidc-preabort-20261010/*.mjs` exits 1 with four missing headers. The checker requires the project's specific NVIDIA corporate copyright text; that ownership is not asserted for these newly authored standalone scripts. The checker and script extensions were not changed to evade this gate.
+
+This branch preserves research evidence and is not a full-CI-ready promotion carrier. Its original frozen script bytes, historical runtime results and source fix remain unchanged. A minimal promotion carrier contains only the already-reviewed `sdk/typescript/src/oidc.ts` and `oidc.test.ts` delta in existing legitimately headed project files; license and SDK gates for that carrier are qualified separately. Do not transfer its license result to this research branch.
+
 ## Native consumer proof
 
 `oidc-preaborted-consumer.mjs` imports the built package's public root export, `dist/index.js`, and uses a real localhost HTTP endpoint returning a synthetic 503. It does not replace or mock the SDK, native fetch, error modules, or HTTP transport. All fixture identifiers and credentials are synthetic.
