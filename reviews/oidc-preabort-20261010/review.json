@@ -1,0 +1,78 @@
+{
+  "verdict": "APPROVE exact final-v2 source and runtime behavior for downstream review",
+  "baseline": "eeba0e7954c0fb4d8e9e2e29d1bfa68e290eb8b3",
+  "sourceReview": {
+    "productionChange": "One already-aborted acquisition guard after the unchanged valid-cache fast path, before creating or joining the shared exchange.",
+    "cachedBehavior": "Preserved: a valid cached token is still returned with an already-aborted signal.",
+    "supersededExperiment": "The earlier guard-before-cache change and cached-rejection expectation were not adopted or approved.",
+    "findings": "No source or behavioral blocker found."
+  },
+  "independentVerification": {
+    "isolatedBuild": true,
+    "regeneratedWireTypesMatched": true,
+    "baselineOidc": {
+      "failed": 1,
+      "passedControls": 23
+    },
+    "candidateOidc": {
+      "passed": 24
+    },
+    "baselineStrictConsumer": {
+      "exitCode": 1,
+      "elapsedMs": 301,
+      "deadlineHit": false,
+      "childClosed": true
+    },
+    "candidateStrictConsumer": {
+      "exitCode": 0,
+      "elapsedMs": 525,
+      "discoveryRequests": 0,
+      "deadlineHit": false,
+      "childClosed": true
+    },
+    "nativeLifecycleControls": {
+      "baselineExit": 0,
+      "candidateExit": 0,
+      "baselineElapsedMs": 1085,
+      "candidateElapsedMs": 1086,
+      "cases": 6,
+      "allServersClosed": true
+    },
+    "fullSdkTests": 183,
+    "lineCoveragePercent": 92.92,
+    "branchCoveragePercent": 83.14,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed",
+    "protoLint": "passed with writable isolated cache",
+    "diffCheck": "passed",
+    "exactPatchMatched": true
+  },
+  "setupFailure": {
+    "action": "Initial independent protobuf lint without cache override",
+    "observed": "Read-only default <DEFAULT_CACHE>/buf prevented cache creation",
+    "exitCode": 1,
+    "retry": "Same lint with isolated writable XDG_CACHE_HOME",
+    "retryExitCode": 0
+  },
+  "identities": {
+    "baselineSourceSha256": "9bde3dbbc71db699d9672be5439c649c5cb61567ca53aab1e5c333da699270c6",
+    "candidateSourceSha256": "5881eeecd64074957781f2dfc1abce679d794e2735a69e6d038bf1790aa6ffa2",
+    "frozenTestsSha256": "6c8c409f00892fb2adc7b8f697041da5ac3b6d5ab0d8a005191df67296dabd39",
+    "unchangedLockSha256": "8241b60904aab536ff8d29394e513d5da33071f0b7a714056584756f3372b995",
+    "sourceOnlyPatchSha256": "38a37d272edeb13b0b27ca1bbc6ff2b885ac7be4e14d2e4afb8000f415f4a306"
+  },
+  "limitations": [
+    "Node v24.19.0 only",
+    "Locally built package, not registry-installed package verification",
+    "No full repository CI, gateway/deployment E2E, or real identity-provider interoperability claim",
+    "Finite controlled lifecycle paths only; no guarantee that arbitrary user secret suppliers settle",
+    "Active shared exchanges intentionally continue after caller cancellation"
+  ],
+  "originalImplementationCredit": {
+    "name": "Seth Jennings",
+    "commit": "5206bc51b2257cf36ac1cdd9fd8e4567db204b3a",
+    "pullRequest": "https://github.com/NVIDIA/OpenShell/pull/2907"
+  },
+  "publicationAuthority": "This review does not authorize an upstream issue, PR, merge, package publication, or deployment."
+}

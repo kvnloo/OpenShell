@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "eeba0e7954c0fb4d8e9e2e29d1bfa68e290eb8b3",
+  "sourceOnlyIntermediateTree": "013d06968e97700c2762588858e235b514708fc3",
+  "baselineSourceSha256": "9bde3dbbc71db699d9672be5439c649c5cb61567ca53aab1e5c333da699270c6",
+  "unchangedLockSha256": "8241b60904aab536ff8d29394e513d5da33071f0b7a714056584756f3372b995",
+  "runtime": {
+    "node": "v24.19.0",
+    "npm": "11.9.0",
+    "nodeBinarySha256": "bc17c508ffeed0ec622934f9b7fa72f8e78da65350e63c3eceb56fa688aa5e12",
+    "npmBinarySha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7"
+  },
+  "builtArtifactsForIdentityOnly": {
+    "publicRootSha256": "1c204795a5fa29ef2867b234a3d0db7427ddff1a77bc83414da8b9bde09e454a",
+    "baselineOidcSha256": "098210f303b85269d0bbdd93dee322f6198d72f0db05f4829dd4cca0372fc64d",
+    "candidateOidcSha256": "d3a2caaa7e7b416396bbd822a72938ee5461a5cd479eccb3958e75c055e65d53"
+  },
+  "payloadPolicy": {
+    "containsOnly": "Public source, synthetic localhost fixture scripts, selected normalized diagnostics, verification summaries and byte identities.",
+    "excluded": [
+      "Dependencies",
+      "Caches",
+      "Generated wire source",
+      "Compiled dist files",
+      "Original absolute sandbox checkout/cache paths",
+      "Real credentials or private user data"
+    ],
+    "logNormalization": "Only checkout prefixes and the one default Buf cache path replaced; other diagnostic content, errors, exits and timings retained; raw local originals preserved."
+  },
+  "files": [
+    {
+      "path": "sdk/typescript/src/oidc.ts",
+      "bytes": 7858,
+      "sha256": "5881eeecd64074957781f2dfc1abce679d794e2735a69e6d038bf1790aa6ffa2"
+    },
+    {
+      "path": "sdk/typescript/src/oidc.test.ts",
+      "bytes": 14286,
+      "sha256": "6c8c409f00892fb2adc7b8f697041da5ac3b6d5ab0d8a005191df67296dabd39"
+    },
+    {
+      "path": "reviews/oidc-preabort-20261010/README.md",
+      "bytes": 6335,
+      "sha256": "8f235196f43e570da0c4c754e86ff804f4b5bd9a3789163d580662ab847e29b1"
+    },
+    {
+      "path": "reviews/oidc-preabort-20261010/logs.json",
+      "bytes": 14002,
+      "sha256": "a672c2bfa0adb4890b7d88d99de186870e7e5f0d66b07ddf7b7870ddfd2a0af0"
+    },
+    {
+      "path": "reviews/oidc-preabort-20261010/native-lifecycle-controls.mjs",
+      "bytes": 7974,
+      "sha256": "8f330c416a18bea4e818034b348c7ddb4a25c80b4a7c6090d90c74bf2135f505"
+    },
+    {
+      "path": "reviews/oidc-preabort-20261010/oidc-preaborted-consumer.mjs",
+      "bytes": 1449,
+      "sha256": "949140b717ded7feb7b049caeb3a7c01a7be84f6e24af66215613f636d35f7cd"
+    },
+    {
+      "path": "reviews/oidc-preabort-20261010/review.json",
+      "bytes": 3167,
+      "sha256": "8117dfece097a051b0b2611dbdbf4571e02e9196bdbcaed9e32f061257d8980e"
+    },
+    {
+      "path": "reviews/oidc-preabort-20261010/run-consumer-with-deadline.mjs",
+      "bytes": 744,
+      "sha256": "b8735d3b7930eea838e0b98a76a3f67aa8d6214adc05187160615de906563d17"
+    },
+    {
+      "path": "reviews/oidc-preabort-20261010/run-independent-with-deadline.mjs",
+      "bytes": 962,
+      "sha256": "16d8c483215e186346ce40325c4293bcd4ec45c92b02d39facef5a304ab5155b"
+    }
+  ],
+  "manifestSelfHash": "Excluded from this list to avoid recursion; the complete repository tree is externally certified."
+}

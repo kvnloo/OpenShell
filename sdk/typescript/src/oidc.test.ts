@@ -95,6 +95,33 @@ describe('clientCredentials', () => {
     expect(forms).toHaveLength(1);
   });
 
+  it('rejects a pre-aborted waiter before starting a fresh exchange', async () => {
+    const { issuer, forms } = await providerServer();
+    const provider = clientCredentials({ issuer, clientId: 'client', clientSecret: 'secret' });
+    // Observe the real fetch implementation without replacing the network path.
+    const fetch = vi.spyOn(globalThis, 'fetch');
+    let callsBeforeRecovery: number;
+    try {
+      await expect(provider.getToken(AbortSignal.abort())).rejects.toMatchObject({ code: 'canceled' });
+      callsBeforeRecovery = fetch.mock.calls.length;
+      // Drain any exchange erroneously started by the canceled waiter on the
+      // baseline, and verify that a later live waiter still works after the fix.
+      await expect(provider.getToken()).resolves.toBe('token-1');
+    } finally {
+      fetch.mockRestore();
+    }
+    expect(callsBeforeRecovery).toBe(0);
+    expect(forms).toHaveLength(1);
+  });
+
+  it('preserves the cached-token fast path for a pre-aborted signal', async () => {
+    const { issuer, forms } = await providerServer();
+    const provider = clientCredentials({ issuer, clientId: 'client', clientSecret: 'secret' });
+    await expect(provider.getToken()).resolves.toBe('token-1');
+    await expect(provider.getToken(AbortSignal.abort())).resolves.toBe('token-1');
+    expect(forms).toHaveLength(1);
+  });
+
   it('renews inside the leeway instead of returning a stale token', async () => {
     const { issuer, forms } = await providerServer(30);
     const provider = clientCredentials({ issuer, clientId: 'client', clientSecret: 'secret' });
@@ -243,6 +270,46 @@ describe('clientCredentials', () => {
     await expect(canceled).rejects.toThrow(/canceled/);
     releaseToken();
     await expect(remaining).resolves.toBe('shared');
+  });
+
+  it('handles a shared exchange failure after one waiter cancels and permits retry', async () => {
+    let issuer = '';
+    let discoveryCalls = 0;
+    let releaseFailure!: () => void;
+    let markStarted!: () => void;
+    const release = new Promise<void>((resolve) => (releaseFailure = resolve));
+    const started = new Promise<void>((resolve) => (markStarted = resolve));
+    const server = createServer(async (req, res) => {
+      if (req.url === '/.well-known/openid-configuration') {
+        discoveryCalls += 1;
+        if (discoveryCalls === 1) {
+          markStarted();
+          await release;
+          res.writeHead(503);
+          res.end();
+          return;
+        }
+        res.end(JSON.stringify({ issuer, token_endpoint: `${issuer}/token` }));
+        return;
+      }
+      res.end(JSON.stringify({ access_token: 'recovered', expires_in: 120 }));
+    });
+    servers.push(server);
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('missing address');
+    issuer = `http://127.0.0.1:${address.port}`;
+    const provider = clientCredentials({ issuer, clientId: 'client', clientSecret: 'secret' });
+    const controller = new AbortController();
+    const canceled = provider.getToken(controller.signal);
+    await started;
+    const remaining = provider.getToken();
+    controller.abort();
+    await expect(canceled).rejects.toMatchObject({ code: 'canceled' });
+    releaseFailure();
+    await expect(remaining).rejects.toThrow(/HTTP 503/);
+    await expect(provider.getToken()).resolves.toBe('recovered');
+    expect(discoveryCalls).toBe(2);
   });
 
   it('rejects remote plaintext and redacts supplier errors', async () => {

@@ -111,6 +111,7 @@ class ClientCredentialsProvider implements OidcTokenProvider {
 
   async getToken(signal?: AbortSignal): Promise<string> {
     if (this.#cached && Date.now() + EXPIRY_LEEWAY_MS < this.#cached.expiresAt) return this.#cached.accessToken;
+    if (signal?.aborted) throw new SdkError('canceled', 'OAuth token request was canceled');
     if (!this.#inFlight) {
       this.#inFlight = this.#exchange().finally(() => {
         this.#inFlight = undefined;
