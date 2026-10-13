@@ -1,0 +1,70 @@
+// SPDX-License-Identifier: Apache-2.0
+
+package gateway
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NVIDIA/OpenShell/sdk/go/openshell/v1/types"
+)
+
+// TestIssue4509GatewayCompatibility uses the directory and metadata layout
+// written by the CLI; it does not contact a gateway or invoke the CLI.
+func TestIssue4509GatewayCompatibility(t *testing.T) {
+	for _, name := range []string{"gw.example.com", "192.0.2.10", "plain-gateway"} {
+		t.Run(name, func(t *testing.T) {
+			metadata := fmt.Sprintf(`{"gateway_endpoint":"https://%s:443","auth_mode":"none"}`, name)
+			root := setupGateway(t, name, metadata)
+			activePath := filepath.Join(root, "openshell", "active_gateway")
+			require.NoError(t, os.WriteFile(activePath, []byte(name), 0o600))
+
+			t.Run("explicit_load", func(t *testing.T) {
+				cfg, err := LoadConfig(name)
+				require.NoError(t, err)
+				assert.Equal(t, name, cfg.Name)
+			})
+			t.Run("active_load", func(t *testing.T) {
+				cfg, err := LoadConfig("")
+				require.NoError(t, err)
+				assert.Equal(t, name, cfg.Name)
+			})
+			t.Run("explicit_client", func(t *testing.T) {
+				client, err := NewClient(name, WithTLS(&types.TLSConfig{Insecure: true}))
+				require.NoError(t, err)
+				require.NoError(t, client.Close())
+			})
+			t.Run("active_client", func(t *testing.T) {
+				client, err := NewClient("", WithTLS(&types.TLSConfig{Insecure: true}))
+				require.NoError(t, err)
+				require.NoError(t, client.Close())
+			})
+			t.Run("listing", func(t *testing.T) {
+				gateways, err := ListGateways()
+				require.NoError(t, err)
+				found := false
+				for _, gateway := range gateways {
+					if gateway.Name == name {
+						found = true
+						assert.True(t, gateway.Active)
+					}
+				}
+				assert.True(t, found, "gateway %q absent from listing: %v", name, gateways)
+			})
+		})
+	}
+}
+
+func TestIssue4509TraversalControls(t *testing.T) {
+	for _, name := range []string{".", "..", "../escape", "foo/bar", `foo\bar`, "/absolute"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := LoadConfig(name)
+			require.ErrorIs(t, err, ErrInvalidGatewayName)
+		})
+	}
+}
