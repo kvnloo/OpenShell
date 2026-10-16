@@ -1,0 +1,46 @@
+Downstream proposed repair and before/after native proof — 2026-10-16
+
+Existing owner PR2646 source e254af1aad7dafd2c06926aa05b575e6ccc2a9ec:
+https://github.com/NVIDIA/OpenShell/pull/2646 (Dhiraj Bokde)
+Untouched-source RED evidence commit: c2262eb (evidence/2646-native-ipv6-20261016).
+2646-native-ipv6-receipt.txt describes that RED commit, not repaired source.
+Original dot packet remains unavailable; this fresh packet is not its recovery.
+
+Minimal production change: only _parse_env_endpoint in python/openshell/sandbox.py.
+After urlparse removes brackets from hostname, re-add them when host contains ':',
+preserving valid gRPC host:port target syntax for IPv6 URLs. Bare endpoints pass
+through unchanged, IPv4/DNS formatting and all existing TLS/default-port decisions
+remain unchanged. Docstring records the IPv6 target contract. No shared abstraction,
+no broad constructor rewrite, no original-author branch change or force-push.
+
+Scope: existing from_env owner PR contract only. from_active_cluster also assembles
+an unbracketed hostname at sandbox.py360-363. That separate inherited path is not
+changed or claimed fixed here; it needs independent gateway-metadata requirements
+and runtime qualification before a wider cutover. Current origin main lacks from_env.
+Do not claim this repair fixes a released current-main from_env implementation.
+
+One before/after combined repository command at each source state:
+<venv>/bin/python -m pytest -q python/openshell/sandbox_test.py review-evidence/2646-native-ipv6_test.py
+RED on original owner source:101 passed /2 failed /1 warning,3.76s,exit1.
+GREEN on minimal repair:103 passed /1 warning,3.14s,exit0.
+The same unchanged eight native cases and95 existing owner SDK tests were used.
+All8 transport cases now pass: bare/URL x IPv4/IPv6 x plaintext/TLS-custom-CA.
+The two original failures were URL IPv6 plaintext and TLS, native grpc UNAVAILABLE
+'Misformatted domain name'; bracketed bare IPv6 controls already passed.
+The warning is pytest's unknown asyncio_mode config because pytest-asyncio was not
+installed; all collected tests are synchronous. No async tests or acceptance claimed.
+
+Native CPU production path: complete SandboxClient.from_env -> native grpc channel
+-> repository generated Health RPC -> real loopback gRPC service. No extracted
+helper, fake client, source monkeypatch, xfail, skipped IPv6 or transport mock.
+The Health-only test service is not a deployed production gateway. Credentials,
+workspace operations, gateway/driver E2E, async lifecycle, OIDC, dependency minima,
+Rust, macOS/VM, Docker, GPUs, performance and hosted CI remain unqualified.
+Environment/dependency/protobuf-generation provenance is in the RED receipt.
+
+Parent independent source review requested; do not self-award human approval.
+Implementation credit: Dhiraj Bokde original SDK; dot historical evidence retained;
+ChatGPT fresh native characterization and narrow downstream proposed bracket repair
+under explicit scoped user direction. This commit is not a human DCO attestation.
+No origin post or admission bypass: public vouch record has no usernames, kvnloo
+has no write access, and DCO/current acceptance/maintainer review gates remain.

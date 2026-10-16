@@ -1202,12 +1202,15 @@ def _parse_env_endpoint(raw: str) -> tuple[str, bool]:
     `gateway_endpoint`. A bare `host:port` is returned unchanged with no TLS
     intent, leaving the TLS decision to `OPENSHELL_TLS` / cert material.
     Returns `(endpoint, scheme_is_https)`.
+    IPv6 URL literals retain the brackets required by gRPC target syntax.
     """
     if "://" not in raw:
         return raw, False
     parsed = urlparse(raw)
     scheme_is_https = parsed.scheme == "https"
     host = parsed.hostname or "127.0.0.1"
+    if ":" in host:
+        host = f"[{host}]"
     port = parsed.port or (443 if scheme_is_https else 80)
     return f"{host}:{port}", scheme_is_https
 
