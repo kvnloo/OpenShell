@@ -1,0 +1,43 @@
+Fresh native AsyncSandbox entry characterization, 2026-10-16
+Owner Dhiraj Bokde PR2645 source42f2ab96891c0ac848b9d8aad55f27ec147b1e90
+https://github.com/NVIDIA/OpenShell/pull/2645
+
+Source unchanged in this RED packet. Not recovery of dot's missing original packet.
+AsyncSandbox.__aenter__ creates its own AsyncSandboxClient.from_active_cluster;
+AsyncSandboxClient.__init__ creates/owns grpc.aio channel. No caller-supplied channel
+exists on this wrapper path. Normal __aexit__ closes client and clears state, but
+Python does not invoke __aexit__ if __aenter__ raises or is cancelled. close() doc
+states release gRPC/bearer resources. This supports deterministic owned-client cleanup,
+not sandbox deletion on failure or closing caller-owned shared channels.
+
+Native Linux ARM64 Python3.14.8, grpcio/grpcio-tools1.84.0, protobuf7.36.2,
+httpx0.28.1, cloudpickle3.1.2, pytest9.1.1, pytest-asyncio1.4.0.
+Dependencies isolated in prior lane17 SDK venv; added pytest-asyncio with pip.
+Generated source-revision bindings by existing tasks/python.toml python:proto task,
+replacing only uv run --frozen python with isolated venv Python. No stubs committed.
+
+Command (same before and after proposed repair):
+<venv>/bin/python -m pytest -q python/openshell/async_sandbox_test.py python/openshell/sandbox_test.py review-evidence/2645-native-entry_test.py
+
+Corrected-fixture RED:114PASS /6FAIL,14.76s,exit1.
+112 existing owner tests pass;2 native successful-entry controls pass.
+All6 native entry failures (RPC error and task cancellation at create/get/readiness)
+retain actual SDK-owned grpc.aio channel in READY instead of SHUTDOWN after the
+async-with entry has failed. Errors preserve PERMISSION_DENIED/sentinel; cancellation
+propagates CancelledError. Test finally closes retained channels, so no permanent leak
+or GC/process-lifetime claim. No fake client/stub/channel, monkeypatched SDK method,
+xfail or skipped test. Handler observes real channel state without replacing it.
+Normal-success controls confirm channel remains READY inside body, then closes and
+wrapper state clears at normal exit. delete_on_exit=False isolates channel ownership
+from remote sandbox deletion semantics. Gateway config is real temporary metadata.
+
+Initial fixture attempt used nonexistent CreateSandboxResponse/GetSandboxResponse
+instead of repository SandboxResponse. That run112PASS/8FAIL included fixture
+failure, not accepted SDK RED. Corrected service responses before the RED above;
+no production edit occurred between those attempts. Preserve this limitation honestly.
+
+Limits: Health/create/get-only loopback service, not a deployed OpenShell gateway.
+No OIDC HTTP resource instrumentation, real sandbox provisioning/deletion, repeated
+cancellation during cleanup, cleanup exceptions, version minimum matrix, hosted CI,
+Rust, Docker, macOS/VM/GPU or throughput acceptance. Original private packet missing.
+Canonical queue67 manual lease6219784722; no original owner branch takeover.
