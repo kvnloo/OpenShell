@@ -1,0 +1,65 @@
+Fresh native transport characterization — 2026-10-16
+
+Owner: Dhiraj Bokde, NVIDIA/OpenShell PR2646
+https://github.com/NVIDIA/OpenShell/pull/2646
+Exact owner source: e254af1aad7dafd2c06926aa05b575e6ccc2a9ec
+SDK production sources unchanged. This evidence-only descendant preserves owner history.
+Original dot packet remains ARTIFACT_NOT_RECOVERED. This is not its bytes,
+its historical test receipt, PR2645 async-entry proof, or OIDC lifecycle proof.
+
+Requirement: PR2646 proposes bare host:port and HTTP/HTTPS environment endpoint
+forms; its from_env docstring documents those forms. Bare bracketed IPv6 already
+works through the same grpc transport. URL parsing drops IPv6 brackets at
+python/openshell/sandbox.py:1195-1212 and supplies ::1:PORT instead of [::1]:PORT.
+
+Environment: native Linux ARM64, Python3.14.8, grpcio1.84.0,
+grpcio-tools1.84.0, protobuf7.36.2, cryptography50.0.2, httpx0.28.1,
+cloudpickle3.1.2, pytest9.1.1. No Docker, VM, macOS, GPU, live gateway, or provider.
+Dependencies installed in isolated venv with:
+python3 -m venv <venv>
+<venv>/bin/pip install grpcio grpcio-tools protobuf httpx cloudpickle pytest cryptography
+This is a current dependency environment, not the original lock/minimum-version matrix.
+
+Generated checked-in-revision protocol inputs using the existing tasks/python.toml
+python:proto task verbatim except replacing uv run --frozen python with the isolated
+venv Python. Includes that task's standard generated relative-import rewrites.
+Generated bindings are build artifacts, not committed evidence or modified SDK source.
+
+One combined final execution:
+<venv>/bin/python -m pytest -q python/openshell/sandbox_test.py review-evidence/2646-native-ipv6_test.py
+Result: exit1, 101 passed / 2 failed / 1 warning in3.76s.
+Original SDK sandbox_test.py:95 pass.
+Fresh real-loopback cases:6 pass /2 fail.
+
+                         bare endpoint       URL endpoint
+IPv4 plaintext           PASS                PASS
+IPv6 plaintext           PASS                FAIL
+IPv4 TLS/custom CA       PASS                PASS
+IPv6 TLS/custom CA       PASS                FAIL
+
+Both failures occur in real SandboxClient.from_env().health() with native gRPC
+StatusCode.UNAVAILABLE: errors resolving ::1:PORT / Misformatted domain name.
+Each IPv6 bare control binds [::1], reaches the same real generated Health handler,
+and returns successfully. No fake client, extracted helper, channel replacement,
+xfailed test or skipped IPv6 case. Successful cases verify Bearer metadata delivery.
+TLS uses ephemeral self-signed IP-SAN certificates and custom CA trust; no stored
+credentials or generated private keys are included in this artifact.
+
+Classification: fresh NATIVE_CPU / LIMITED correctness evidence on existing owner
+PR. A real gRPC service implements Health only; this is NOT a production gateway
+or deployment E2E result. No claim about HTTP/HTTPS gateway deployment, workspace
+operations, minimum dependency versions, async lifecycle, OIDC, macOS, VM or GPUs.
+No production fix, full-current-main qualification, human review/signoff, or origin
+publication. Current main lacks from_env; do not describe this PR finding as a
+released current-main bug. Existing owner controls the next repair/adoption decision.
+
+Publication gates independently checked: NVIDIA/OpenShell current CONTRIBUTING
+requires maintainer vouch before PR and non-write contributor issue acceptance.
+Public .github/VOUCHED.td contains no contributor usernames; kvnloo push=false.
+Original4019/4020/4021 closed by vouch gate and DCOAssistant failed. Do not reopen,
+create duplicates, write a human-voice vouch, or attest DCO/hands-on human review.
+
+Canonical queue: https://github.com/kvnloo/oss-factory/issues/67
+Bounded manual evidence lease: https://github.com/kvnloo/oss-factory/issues/67#issuecomment-6219614904
+Registry prerequisite preserved: factory branch registry/openshell-20261011 at
+58548309d096e7366de697501d9d23ef8a2f9e4a (not main; no new proposal).
