@@ -2344,6 +2344,7 @@ class AsyncSandbox:
     Async twin of `Sandbox`: use it with `async with`. Constructor
     arguments and OIDC kwargs mirror `Sandbox` exactly and forward to
     `AsyncSandboxClient.from_active_cluster`.
+    The wrapper owns its client and closes it if entry fails or is cancelled.
     """
 
     def __init__(
@@ -2415,30 +2416,38 @@ class AsyncSandbox:
         )
         self._client = client
 
-        if self._sandbox_input is None:
-            self._session = await client.create_session(
+        try:
+            if self._sandbox_input is None:
+                self._session = await client.create_session(
+                    workspace=self._workspace,
+                    spec=self._spec,
+                    name=self._name,
+                    labels=self._labels,
+                )
+            elif isinstance(self._sandbox_input, SandboxRef):
+                self._session = AsyncSandboxSession(client, self._sandbox_input)
+            else:
+                self._session = await client.get_session(
+                    self._sandbox_input, workspace=self._workspace
+                )
+
+            self._workspace = getattr(self._session, "_workspace", self._workspace)
+
+            ready = await client.wait_ready(
+                self._session.sandbox.name,
                 workspace=self._workspace,
-                spec=self._spec,
-                name=self._name,
-                labels=self._labels,
+                timeout_seconds=self._ready_timeout_seconds,
             )
-        elif isinstance(self._sandbox_input, SandboxRef):
-            self._session = AsyncSandboxSession(client, self._sandbox_input)
-        else:
-            self._session = await client.get_session(
-                self._sandbox_input, workspace=self._workspace
-            )
+            self._session = AsyncSandboxSession(client, ready)
 
-        self._workspace = getattr(self._session, "_workspace", self._workspace)
-
-        ready = await client.wait_ready(
-            self._session.sandbox.name,
-            workspace=self._workspace,
-            timeout_seconds=self._ready_timeout_seconds,
-        )
-        self._session = AsyncSandboxSession(client, ready)
-
-        return self
+            return self
+        except BaseException:
+            try:
+                await client.close()
+            finally:
+                self._session = None
+                self._client = None
+            raise
 
     async def __aexit__(self, *args: object) -> None:
         try:

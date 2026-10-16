@@ -1,0 +1,57 @@
+Fresh native AsyncSandbox failed-entry proposed repair, 2026-10-16
+
+Owner Dhiraj Bokde PR2645:
+https://github.com/NVIDIA/OpenShell/pull/2645
+Owner source42f2ab96891c0ac848b9d8aad55f27ec147b1e90 remains untouched upstream.
+Untouched-source RED packet is parent commit6f4b5f9 on this same evidence carrier.
+Original dot packet remains unavailable; this is fresh, independently readable proof.
+
+Requirement/ownership: AsyncSandbox creates AsyncSandboxClient.from_active_cluster
+inside __aenter__; the client constructor creates its own grpc.aio channel. No
+caller-owned channel is supplied here. Existing normal __aexit__ closes this client
+and resets wrapper state. Failed/cancelled __aenter__ bypasses Python's __aexit__, so
+it must release what it acquired. This is deterministic owned-resource cleanup, not
+a permanent GC leak claim or a request to close caller-owned shared channels.
+
+Only production change: AsyncSandbox.__aenter__ protects post-construction entry
+with except BaseException, awaits client.close(), clears _session/_client in finally,
+then re-raises. Catch includes task cancellation; successful entry/body and normal
+__aexit__ are unchanged. Class docstring records ownership/failure cleanup contract.
+No OIDC redesign, remote sandbox deletion/adoption, async client API change, original
+owner branch rewrite or competing upstream PR.
+
+Same exact combined command before/after:
+<venv>/bin/python -m pytest -q python/openshell/async_sandbox_test.py python/openshell/sandbox_test.py review-evidence/2645-native-entry_test.py
+Corrected-fixture RED:114PASS/6FAIL in14.76s,exit1.
+Proposed repair GREEN:120PASS in6.78s,exit0; no warnings/skips/xfails reported.
+Includes37 existing async owner tests,75 existing sync owner tests,8 native cases.
+Six failed-entry cases: native PERMISSION_DENIED or task cancellation at create,
+attach/get, readiness; original actual channel stays READY after failed async-with
+entry. Repair produces SHUTDOWN and clears wrapper state. Original RPC code/details
+and CancelledError remain observable. Two success controls confirm channel READY
+inside context body, SHUTDOWN/reset after ordinary exit. Test finally closes any
+failed-head retained channels, avoiding environmental leak and overstated persistence.
+
+Complete production AsyncSandbox -> actual gateway metadata -> AsyncSandboxClient
+-> grpc.aio channel -> generated CreateSandbox/GetSandbox RPC -> real aio loopback
+service. No SDK method/client/stub/channel replacement or extracted helper.
+Ephemeral metadata only. Test observes actual channel via wrapper state in server
+handler, never substitutes source objects. delete_on_exit=False intentionally isolates
+channel lifecycle from remote sandbox deletion semantics.
+
+Environment: native Linux ARM64 Python3.14.8;grpcio/grpcio-tools1.84.0;
+protobuf7.36.2;httpx0.28.1;cloudpickle3.1.2;pytest9.1.1;pytest-asyncio1.4.0.
+Bindings generated with owner tasks/python.toml python:proto task; only uv Python
+invocation substituted for isolated venv Python. No generated bindings committed.
+Initial fixture used nonexistent response type names and produced112PASS/8FAIL;
+corrected to actual SandboxResponse before accepted RED, source unchanged then.
+
+LIMITED: loopback service is not a production gateway deployment, real provisioning,
+OIDC HTTP cleanup instrumentation, repeated cancellation during cleanup, close()
+exceptions, dependency-minimum matrix, full SDK suite, hosted CI, Rust, Docker,
+macOS/VM/GPU or performance acceptance. No current-main async implementation claim.
+Parent independent machine source review requested separately, not personal human
+review, DCO signoff, maintainer approval or permission to create upstream PRs.
+Dhiraj owns original SDK implementation; dot historical evidence credit preserved;
+ChatGPT fresh native tests and narrow proposed repair under scoped user direction.
+Canonical queue67 bounded manual lease6219784722. Original admission gates retained.
