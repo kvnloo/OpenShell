@@ -3,7 +3,7 @@
 
 //! Podman socket discovery shared by the gateway driver and diagnostics.
 //!
-//! OpenShell requires a host-local Podman API Unix socket. A generic Podman
+//! `OpenShell` requires a host-local Podman API Unix socket. A generic Podman
 //! remote connection (for example SSH or TCP) is not sufficient unless it can
 //! be mapped back to the host-side forwarded socket of a Podman Machine.
 
